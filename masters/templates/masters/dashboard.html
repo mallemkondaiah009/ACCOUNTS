@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accounting Master Hub - Django REST Framework</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            color-scheme: dark;
+            --bg-primary: #090d16;
+            --bg-secondary: #0f172a;
+            --bg-card: rgba(17, 24, 39, 0.75);
+            --bg-card-hover: rgba(26, 36, 56, 0.9);
+            --bg-input: #131b2e;
+            --border-color: rgba(255, 255, 255, 0.09);
+            --border-focus: #6366f1;
+            --accent-primary: #6366f1;
+            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+            --accent-glow: rgba(99, 102, 241, 0.25);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.12);
+            --success: #10b981;
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-primary);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.14) 0px, transparent 45%),
+                radial-gradient(at 100% 100%, rgba(217, 70, 239, 0.1) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(15, 23, 42, 0.6) 0px, transparent 100%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── HEADER ── */
+        header {
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(9, 13, 22, 0.85);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            padding: 0.9rem 1.5rem;
+        }
+
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius-md);
+            background: var(--accent-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 1.15rem;
+            color: #fff;
+            box-shadow: 0 4px 16px var(--accent-glow);
+            flex-shrink: 0;
+        }
+
+        .brand-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #fff;
+        }
+
+        .brand-sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .header-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-link {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 7px 13px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+            background: rgba(255, 255, 255, 0.03);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-link:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.22);
+            transform: translateY(-1px);
+        }
+
+        /* ── BUTTONS ── */
+        .btn-primary {
+            background: var(--accent-gradient);
+            color: #fff;
+            border: none;
+            padding: 9px 18px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 0.86rem;
+            cursor: pointer;
+            box-shadow: 0 4px 14px var(--accent-glow);
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+            filter: brightness(1.08);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            font-size: 0.86rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .btn-action {
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            background: transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-edit {
+            color: #818cf8;
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.25);
+        }
+        .btn-edit:hover {
+            background: rgba(99, 102, 241, 0.22);
+            color: #a5b4fc;
+        }
+
+        .btn-delete {
+            color: #f87171;
+            background: var(--danger-bg);
+            border-color: rgba(239, 68, 68, 0.25);
+        }
+        .btn-delete:hover {
+            background: rgba(239, 68, 68, 0.25);
+            color: #fca5a5;
+        }
+
+        /* ── MAIN LAYOUT ── */
+        main {
+            flex: 1;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* ── STATS CARDS ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 1.75rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.25rem 1.5rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent-gradient);
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+
+        .stat-card:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-card:hover::after {
+            opacity: 1;
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-title {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .stat-pill {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+        }
+
+        .stat-val {
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin: 6px 0;
+            color: #fff;
+            letter-spacing: -0.03em;
+        }
+
+        .stat-sub {
+            font-size: 0.78rem;
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+
+        /* ── TABS ── */
+        .nav-tabs {
+            display: flex;
+            gap: 6px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .nav-tabs::-webkit-scrollbar { display: none; }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.92rem;
+            font-weight: 600;
+            padding: 12px 18px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-main);
+        }
+
+        .tab-btn.active {
+            color: #fff;
+            border-bottom-color: var(--accent-primary);
+        }
+
+        .tab-count {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+        .tab-btn.active .tab-count {
+            background: rgba(99, 102, 241, 0.3);
+            color: #a5b4fc;
+        }
+
+        /* ── TOOLBAR ── */
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            gap: 0.85rem;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 8px 14px;
+            width: 100%;
+            max-width: 340px;
+            transition: all 0.2s ease;
+        }
+
+        .search-box:focus-within {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            background: var(--bg-input);
+        }
+
+        .search-box span {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-right: 8px;
+            user-select: none;
+        }
+
+        .search-box input {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 0.86rem;
+            font-family: inherit;
+            width: 100%;
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-dim);
+        }
+
+        .category-filters {
+            display: flex;
+            gap: 5px;
+            overflow-x: auto;
+            padding-bottom: 2px;
+        }
+
+        .filter-chip {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 0.74rem;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .filter-chip:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.09);
+        }
+
+        .filter-chip.active {
+            background: rgba(99, 102, 241, 0.25);
+            border-color: var(--accent-primary);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+        }
+
+        /* ── TABLE ── */
+        .table-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.86rem;
+            min-width: 600px;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.025);
+            color: var(--text-muted);
+            font-weight: 700;
+            padding: 13px 18px;
+            border-bottom: 1px solid var(--border-color);
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 13px 18px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.025);
+        }
+
+        .code-pill {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            color: #e2e8f0;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: inline-block;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .badge-income { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-expense { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-asset { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .badge-liability { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        .actions-cell {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        /* ── MODALS ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.78);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            background: #111827;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            animation: modalScale 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            overflow: hidden;
+        }
+
+        @keyframes modalScale {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 1.25rem 1.75rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+            flex-shrink: 0;
+        }
+
+        .modal-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            line-height: 1;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            transition: color 0.15s ease;
+        }
+
+        .close-btn:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .modal-body {
+            padding: 1.75rem;
+            overflow-y: auto;
+            max-height: calc(90vh - 140px);
+        }
+
+        .form-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.2rem;
+        }
+
+        .form-full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group {
+            margin-bottom: 1.15rem;
+        }
+
+        .form-group label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .label-hint {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--text-dim);
+            text-transform: none;
+        }
+
+        /* ── INPUTS & SELECTS (FIXED DARK DROPDOWNS) ── */
+        .form-control {
+            width: 100%;
+            background-color: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            color: #f8fafc;
+            font-size: 0.88rem;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.2s ease;
+            color-scheme: dark;
+        }
+
+        .form-control:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+            background-color: #172138;
+        }
+
+        .form-control::placeholder {
+            color: var(--text-dim);
+        }
+
+        /* Essential dark dropdown fix for Chrome/Edge/Firefox/Safari on Windows */
+        select.form-control {
+            cursor: pointer;
+            color-scheme: dark !important;
+            background-color: #131b2e !important;
+            color: #f8fafc !important;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 16px;
+            padding-right: 40px;
+        }
+
+        select.form-control option {
+            background-color: #131b2e !important;
+            color: #f8fafc !important;
+            padding: 10px 14px !important;
+            font-size: 0.9rem;
+        }
+
+        select.form-control option:checked,
+        select.form-control option:hover {
+            background-color: #4f46e5 !important;
+            color: #ffffff !important;
+        }
+
+        .modal-footer {
+            padding: 1.25rem 1.75rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.02);
+            flex-shrink: 0;
+        }
+
+        /* ── TOAST ── */
+        .toast {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            background: #1e293b;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: var(--radius-sm);
+            border-left: 4px solid var(--accent-primary);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 200;
+            display: none;
+            font-size: 0.88rem;
+            font-weight: 500;
+            animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            max-width: 90vw;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* ── RESPONSIVE RULES ── */
+        @media (max-width: 768px) {
+            header {
+                padding: 0.75rem 1rem;
+            }
+            main {
+                padding: 1rem;
+            }
+            .header-inner {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .header-links {
+                justify-content: space-between;
+                overflow-x: auto;
+            }
+            .btn-link {
+                padding: 5px 10px;
+                font-size: 0.75rem;
+            }
+            .form-grid-2 {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .toolbar-left {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-box {
+                max-width: 100%;
+            }
+            .category-filters {
+                width: 100%;
+            }
+            .modal-body {
+                padding: 1.25rem;
+            }
+            .modal-header, .modal-footer {
+                padding: 1rem 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-inner">
+            <div class="brand">
+                <div class="brand-icon">DRF</div>
+                <div>
+                    <h1 class="brand-title">Accounting Master Management</h1>
+                    <div class="brand-sub">Firm Master • Group Master • Ledger Master (Django REST Framework)</div>
+                </div>
+            </div>
+            <div class="header-links">
+                <a href="/api/firms/" target="_blank" class="btn-link">
+                    <span>🏢</span> Firms API
+                </a>
+                <a href="/api/groups/" target="_blank" class="btn-link">
+                    <span>🗂️</span> Groups API
+                </a>
+                <a href="/api/ledgers/" target="_blank" class="btn-link">
+                    <span>📖</span> Ledgers API
+                </a>
+                <a href="/admin/" target="_blank" class="btn-link">
+                    <span>⚙️</span> Django Admin
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- STATS SUMMARY -->
+        <div class="stats-grid">
+            <div class="stat-card" onclick="switchTab('firm')" style="cursor: pointer;">
+                <div class="stat-header">
+                    <span class="stat-title">Firm Master</span>
+                    <span class="stat-pill">5 Alpha-Numeric</span>
+                </div>
+                <div class="stat-val" id="stat-firms">0</div>
+                <div class="stat-sub">Companies & Accounting Branches</div>
+            </div>
+            <div class="stat-card" onclick="switchTab('group')" style="cursor: pointer;">
+                <div class="stat-header">
+                    <span class="stat-title">Group Master</span>
+                    <span class="stat-pill">Auto No & Categories</span>
+                </div>
+                <div class="stat-val" id="stat-groups">0</div>
+                <div class="stat-sub">INCOME • EXPENSES • ASSETS • LIABILITIES</div>
+            </div>
+            <div class="stat-card" onclick="switchTab('ledger')" style="cursor: pointer;">
+                <div class="stat-header">
+                    <span class="stat-title">Ledger Master</span>
+                    <span class="stat-pill">Linked to Group & Firm</span>
+                </div>
+                <div class="stat-val" id="stat-ledgers">0</div>
+                <div class="stat-sub">Account Heads with 3 Address Lines</div>
+            </div>
+        </div>
+
+        <!-- NAVIGATION TABS -->
+        <div class="nav-tabs">
+            <button class="tab-btn active" id="tab-btn-firm" onclick="switchTab('firm')">
+                🏢 Firm Master <span class="tab-count" id="badge-firm-count">0</span>
+            </button>
+            <button class="tab-btn" id="tab-btn-group" onclick="switchTab('group')">
+                🗂️ Group Master <span class="tab-count" id="badge-group-count">0</span>
+            </button>
+            <button class="tab-btn" id="tab-btn-ledger" onclick="switchTab('ledger')">
+                📖 Ledger Master <span class="tab-count" id="badge-ledger-count">0</span>
+            </button>
+        </div>
+
+        <!-- ═════════ TAB 1: FIRM MASTER ═════════ -->
+        <div id="tab-firm" class="tab-content">
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <div class="search-box">
+                        <span>🔍</span>
+                        <input type="text" id="firm-search" placeholder="Search firm code or name..." oninput="filterFirms()">
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="openAddFirmModal()">+ Add Firm</button>
+            </div>
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 140px;">Firm Code (5 Chars)</th>
+                                <th>Firm Name (50 Chars)</th>
+                                <th style="width: 160px;">Created Date</th>
+                                <th style="width: 130px; text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="firm-tbody">
+                            <tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading firms...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═════════ TAB 2: GROUP MASTER ═════════ -->
+        <div id="tab-group" class="tab-content" style="display:none;">
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <div class="search-box">
+                        <span>🔍</span>
+                        <input type="text" id="group-search" placeholder="Search group name..." oninput="filterGroups()">
+                    </div>
+                    <div class="category-filters">
+                        <button class="filter-chip active" onclick="setGroupCategoryFilter('', this)">ALL</button>
+                        <button class="filter-chip" onclick="setGroupCategoryFilter('INCOME', this)">INCOME</button>
+                        <button class="filter-chip" onclick="setGroupCategoryFilter('EXPENSES', this)">EXPENSES</button>
+                        <button class="filter-chip" onclick="setGroupCategoryFilter('ASSETS', this)">ASSETS</button>
+                        <button class="filter-chip" onclick="setGroupCategoryFilter('LIABILITIES', this)">LIABILITIES</button>
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="openAddGroupModal()">+ Add Group</button>
+            </div>
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 130px;">Grp Code (Auto)</th>
+                                <th>Group Name (50 Chars)</th>
+                                <th style="width: 150px;">Category (Dropdown)</th>
+                                <th>Super Group (5 Numeric)</th>
+                                <th style="width: 130px; text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="group-tbody">
+                            <tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading groups...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═════════ TAB 3: LEDGER MASTER ═════════ -->
+        <div id="tab-ledger" class="tab-content" style="display:none;">
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <div class="search-box">
+                        <span>🔍</span>
+                        <input type="text" id="ledger-search" placeholder="Search ledger code, name, address..." oninput="filterLedgers()">
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="openAddLedgerModal()">+ Add Ledger</button>
+            </div>
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 130px;">Ledger Code</th>
+                                <th>Ledger Name</th>
+                                <th>Group (GrpCode)</th>
+                                <th style="width: 130px;">Category</th>
+                                <th style="width: 110px;">Firm</th>
+                                <th>Address (Add1, Add2, Add3)</th>
+                                <th style="width: 130px; text-align: right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledger-tbody">
+                            <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading ledgers...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ═════════ FIRM MODAL ═════════ -->
+    <div id="firmModal" class="modal-overlay" onclick="handleOverlayClick(event, 'firmModal')">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="firm-modal-title">🏢 Add Firm Master</div>
+                <button class="close-btn" onclick="closeModal('firmModal')">&times;</button>
+            </div>
+            <form onsubmit="saveFirm(event)">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>
+                            <span>Firm Code</span>
+                            <span class="label-hint">Max 5 alpha-numeric</span>
+                        </label>
+                        <input type="text" id="modal-firm-code" class="form-control" maxlength="5" required placeholder="e.g. HOTEL, GAR">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <span>Firm Name</span>
+                            <span class="label-hint">Max 50 characters</span>
+                        </label>
+                        <input type="text" id="modal-firm-name" class="form-control" maxlength="50" required placeholder="e.g. PLATINUM, GARDEN">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('firmModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Firm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═════════ GROUP MODAL ═════════ -->
+    <div id="groupModal" class="modal-overlay" onclick="handleOverlayClick(event, 'groupModal')">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="group-modal-title">🗂️ Add Group Master</div>
+                <button class="close-btn" onclick="closeModal('groupModal')">&times;</button>
+            </div>
+            <form onsubmit="saveGroup(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="modal-grp-code-hidden">
+                    <div class="form-group">
+                        <label>
+                            <span>Group Name</span>
+                            <span class="label-hint">Max 50 characters</span>
+                        </label>
+                        <input type="text" id="modal-grp-name" class="form-control" maxlength="50" required placeholder="e.g. Cash, General Exp, BANK">
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label>
+                                <span>Category (Dropdown)</span>
+                            </label>
+                            <select id="modal-grp-category" class="form-control" required>
+                                <option value="INCOME">INCOME</option>
+                                <option value="EXPENSES">EXPENSES</option>
+                                <option value="ASSETS">ASSETS</option>
+                                <option value="LIABILITIES">LIABILITIES</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <span>Super Group</span>
+                                <span class="label-hint">Optional parent</span>
+                            </label>
+                            <select id="modal-grp-super" class="form-control">
+                                <option value="">None (Top Level)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('groupModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Group</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═════════ LEDGER MODAL (PERFECT 2-COLUMN RESPONSIVE LAYOUT) ═════════ -->
+    <div id="ledgerModal" class="modal-overlay" onclick="handleOverlayClick(event, 'ledgerModal')">
+        <div class="modal" style="max-width: 640px;">
+            <div class="modal-header">
+                <div class="modal-title" id="ledger-modal-title">📖 Add Ledger Master</div>
+                <button class="close-btn" onclick="closeModal('ledgerModal')">&times;</button>
+            </div>
+            <form onsubmit="saveLedger(event)">
+                <div class="modal-body">
+                    <div class="form-grid-2">
+                        <!-- Code & Name -->
+                        <div class="form-group">
+                            <label>
+                                <span>Ledger Code</span>
+                                <span class="label-hint">5 alpha-numeric</span>
+                            </label>
+                            <input type="text" id="modal-ledger-code" class="form-control" maxlength="5" required placeholder="e.g. HDFC, CASH">
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <span>Ledger Name</span>
+                                <span class="label-hint">50 characters</span>
+                            </label>
+                            <input type="text" id="modal-ledger-name" class="form-control" maxlength="50" required placeholder="e.g. HDFCBANK, CASH">
+                        </div>
+
+                        <!-- Dropdowns -->
+                        <div class="form-group">
+                            <label>
+                                <span>Group (GrpCode Dropdown)</span>
+                            </label>
+                            <select id="modal-ledger-group" class="form-control" required>
+                                <option value="">Loading groups...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <span>Firm (Optional)</span>
+                            </label>
+                            <select id="modal-ledger-firm" class="form-control">
+                                <option value="">None / All Firms</option>
+                            </select>
+                        </div>
+
+                        <!-- Address fields -->
+                        <div class="form-group">
+                            <label>
+                                <span>Address Line 1 (Add1)</span>
+                            </label>
+                            <input type="text" id="modal-ledger-add1" class="form-control" maxlength="50" placeholder="Street / Building">
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <span>Address Line 2 (Add2)</span>
+                            </label>
+                            <input type="text" id="modal-ledger-add2" class="form-control" maxlength="50" placeholder="Area / Locality">
+                        </div>
+
+                        <div class="form-group form-full" style="margin-bottom: 0;">
+                            <label>
+                                <span>Address Line 3 (Add3)</span>
+                            </label>
+                            <input type="text" id="modal-ledger-add3" class="form-control" maxlength="50" placeholder="City / State / Pincode">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal('ledgerModal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Ledger</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // State
+        let firms = [];
+        let groups = [];
+        let ledgers = [];
+        let currentCategoryFilter = '';
+        let editingFirmCode = null;
+        let editingGrpCode = null;
+        let editingLedgerCode = null;
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 3200);
+        }
+
+        function handleOverlayClick(e, modalId) {
+            if (e.target.id === modalId) {
+                closeModal(modalId);
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+            
+            const btn = document.getElementById(`tab-btn-${tab}`);
+            if (btn) btn.classList.add('active');
+            
+            const content = document.getElementById(`tab-${tab}`);
+            if (content) content.style.display = 'block';
+        }
+
+        function openModal(id) {
+            populateSelectOptions();
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        /* ── POPULATE SELECT DROPDOWNS ROBUSTLY ── */
+        function populateSelectOptions() {
+            // 1. Group Super Group Dropdown
+            const superSelect = document.getElementById('modal-grp-super');
+            if (superSelect) {
+                let html = '<option value="">None (Top Level)</option>';
+                groups.forEach(g => {
+                    // avoid self as super when editing
+                    if (editingGrpCode && String(g.GrpCode) === String(editingGrpCode)) return;
+                    html += `<option value="${g.GrpCode}">${g.GrpCode} - ${escapeHtml(g.GrpName)} (${g.category})</option>`;
+                });
+                superSelect.innerHTML = html;
+            }
+
+            // 2. Ledger Group Dropdown
+            const ledgerGrpSelect = document.getElementById('modal-ledger-group');
+            if (ledgerGrpSelect) {
+                if (groups.length === 0) {
+                    ledgerGrpSelect.innerHTML = '<option value="">No groups available - please add a group first</option>';
+                } else {
+                    let html = '<option value="">Select Group...</option>';
+                    groups.forEach(g => {
+                        html += `<option value="${g.GrpCode}">${g.GrpCode} - ${escapeHtml(g.GrpName)} [${g.category}]</option>`;
+                    });
+                    ledgerGrpSelect.innerHTML = html;
+                }
+            }
+
+            // 3. Ledger Firm Dropdown
+            const ledgerFirmSelect = document.getElementById('modal-ledger-firm');
+            if (ledgerFirmSelect) {
+                let html = '<option value="">None / All Firms</option>';
+                firms.forEach(f => {
+                    html += `<option value="${f.FirmCode}">${f.FirmCode} - ${escapeHtml(f.Firmname)}</option>`;
+                });
+                ledgerFirmSelect.innerHTML = html;
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        /* ── FETCH ALL DATA FROM API ── */
+        async function fetchAll() {
+            try {
+                const [fRes, gRes, lRes] = await Promise.all([
+                    fetch('/api/firms/'),
+                    fetch('/api/groups/'),
+                    fetch('/api/ledgers/')
+                ]);
+                const fData = await fRes.json();
+                const gData = await gRes.json();
+                const lData = await lRes.json();
+
+                firms = fData.results || fData || [];
+                groups = gData.results || gData || [];
+                ledgers = lData.results || lData || [];
+
+                // Update counters
+                document.getElementById('stat-firms').innerText = firms.length;
+                document.getElementById('stat-groups').innerText = groups.length;
+                document.getElementById('stat-ledgers').innerText = ledgers.length;
+
+                document.getElementById('badge-firm-count').innerText = firms.length;
+                document.getElementById('badge-group-count').innerText = groups.length;
+                document.getElementById('badge-ledger-count').innerText = ledgers.length;
+
+                // Immediately populate all select dropdowns so they are ready
+                populateSelectOptions();
+
+                // Render views
+                renderFirms();
+                renderGroups();
+                renderLedgers();
+            } catch (err) {
+                console.error('Fetch error:', err);
+                showToast('Failed to load records from DRF API');
+            }
+        }
+
+        /* ── FIRM MASTER RENDER & CRUD ── */
+        function renderFirms() {
+            const query = (document.getElementById('firm-search').value || '').trim().toLowerCase();
+            const filtered = firms.filter(f => 
+                f.FirmCode.toLowerCase().includes(query) || f.Firmname.toLowerCase().includes(query)
+            );
+            const tbody = document.getElementById('firm-tbody');
+            if (!filtered.length) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">
+                    ${query ? 'No matching firms found for "' + escapeHtml(query) + '"' : 'No firms recorded yet. Click "+ Add Firm" above.'}
+                </td></tr>`;
+                return;
+            }
+            tbody.innerHTML = filtered.map(f => `
+                <tr>
+                    <td><span class="code-pill">${escapeHtml(f.FirmCode)}</span></td>
+                    <td><strong style="color:#fff;">${escapeHtml(f.Firmname)}</strong></td>
+                    <td style="color: var(--text-muted); font-size: 0.8rem;">
+                        ${f.created_at ? new Date(f.created_at).toLocaleDateString() : '-'}
+                    </td>
+                    <td class="actions-cell">
+                        <button class="btn-action btn-edit" onclick="editFirm('${escapeHtml(f.FirmCode)}')">✏️ Edit</button>
+                        <button class="btn-action btn-delete" onclick="deleteFirm('${escapeHtml(f.FirmCode)}')">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterFirms() { renderFirms(); }
+
+        function openAddFirmModal() {
+            editingFirmCode = null;
+            document.getElementById('firm-modal-title').innerText = '🏢 Add Firm Master';
+            document.getElementById('modal-firm-code').value = '';
+            document.getElementById('modal-firm-code').readOnly = false;
+            document.getElementById('modal-firm-name').value = '';
+            openModal('firmModal');
+        }
+
+        function editFirm(code) {
+            const firm = firms.find(f => f.FirmCode === code);
+            if (!firm) return;
+            editingFirmCode = code;
+            document.getElementById('firm-modal-title').innerText = '🏢 Edit Firm Master';
+            document.getElementById('modal-firm-code').value = firm.FirmCode;
+            document.getElementById('modal-firm-code').readOnly = true;
+            document.getElementById('modal-firm-name').value = firm.Firmname;
+            openModal('firmModal');
+        }
+
+        async function saveFirm(e) {
+            e.preventDefault();
+            const payload = {
+                FirmCode: document.getElementById('modal-firm-code').value.trim(),
+                Firmname: document.getElementById('modal-firm-name').value.trim()
+            };
+
+            const url = editingFirmCode ? `/api/firms/${encodeURIComponent(editingFirmCode)}/` : '/api/firms/';
+            const method = editingFirmCode ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    showToast(editingFirmCode ? 'Firm updated successfully' : 'Firm created successfully');
+                    closeModal('firmModal');
+                    fetchAll();
+                } else {
+                    const err = await res.json();
+                    showToast(JSON.stringify(err));
+                }
+            } catch (err) {
+                showToast('Network error while saving firm');
+            }
+        }
+
+        async function deleteFirm(code) {
+            if (!confirm(`Are you sure you want to delete Firm "${code}"?`)) return;
+            try {
+                const res = await fetch(`/api/firms/${encodeURIComponent(code)}/`, { method: 'DELETE' });
+                if (res.ok) {
+                    showToast(`Firm ${code} deleted`);
+                    fetchAll();
+                } else {
+                    showToast('Failed to delete firm');
+                }
+            } catch (err) {
+                showToast('Error deleting firm');
+            }
+        }
+
+        /* ── GROUP MASTER RENDER & CRUD ── */
+        function getCategoryBadge(cat) {
+            const map = {
+                'INCOME': 'badge-income',
+                'EXPENSES': 'badge-expense',
+                'ASSETS': 'badge-asset',
+                'LIABILITIES': 'badge-liability'
+            };
+            return `<span class="badge ${map[cat] || 'badge-asset'}">${cat}</span>`;
+        }
+
+        function renderGroups() {
+            const query = (document.getElementById('group-search').value || '').trim().toLowerCase();
+            const filtered = groups.filter(g => {
+                const matchesQuery = g.GrpName.toLowerCase().includes(query) || String(g.GrpCode).includes(query);
+                const matchesCat = !currentCategoryFilter || g.category === currentCategoryFilter;
+                return matchesQuery && matchesCat;
+            });
+            const tbody = document.getElementById('group-tbody');
+            if (!filtered.length) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">
+                    No groups found matching filter.
+                </td></tr>`;
+                return;
+            }
+            tbody.innerHTML = filtered.map(g => `
+                <tr>
+                    <td><span class="code-pill">${g.GrpCode}</span></td>
+                    <td><strong style="color:#fff;">${escapeHtml(g.GrpName)}</strong></td>
+                    <td>${getCategoryBadge(g.category)}</td>
+                    <td>${g.Super ? `<span class="code-pill">${g.Super}</span> ${escapeHtml(g.super_name || '')}` : '<span style="color:var(--text-dim);">-</span>'}</td>
+                    <td class="actions-cell">
+                        <button class="btn-action btn-edit" onclick="editGroup(${g.GrpCode})">✏️ Edit</button>
+                        <button class="btn-action btn-delete" onclick="deleteGroup(${g.GrpCode})">🗑️</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterGroups() { renderGroups(); }
+
+        function setGroupCategoryFilter(cat, elem) {
+            currentCategoryFilter = cat;
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            elem.classList.add('active');
+            renderGroups();
+        }
+
+        function openAddGroupModal() {
+            editingGrpCode = null;
+            document.getElementById('group-modal-title').innerText = '🗂️ Add Group Master';
+            document.getElementById('modal-grp-name').value = '';
+            document.getElementById('modal-grp-category').value = 'EXPENSES';
+            populateSelectOptions();
+            document.getElementById('modal-grp-super').value = '';
+            openModal('groupModal');
+        }
+
+        function editGroup(code) {
+            const grp = groups.find(g => g.GrpCode === code);
+            if (!grp) return;
+            editingGrpCode = code;
+            document.getElementById('group-modal-title').innerText = '🗂️ Edit Group Master';
+            document.getElementById('modal-grp-name').value = grp.GrpName;
+            document.getElementById('modal-grp-category').value = grp.category;
+            populateSelectOptions();
+            document.getElementById('modal-grp-super').value = grp.Super || '';
+            openModal('groupModal');
+        }
+
+        async function saveGroup(e) {
+            e.preventDefault();
+            const superVal = document.getElementById('modal-grp-super').value;
+            const payload = {
+                GrpName: document.getElementById('modal-grp-name').value.trim(),
+                category: document.getElementById('modal-grp-category').value,
+                Super: superVal ? parseInt(superVal) : null
+            };
+
+            const url = editingGrpCode ? `/api/groups/${editingGrpCode}/` : '/api/groups/';
+            const method = editingGrpCode ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    showToast(editingGrpCode ? 'Group updated' : 'Group created');
+                    closeModal('groupModal');
+                    fetchAll();
+                } else {
+                    const err = await res.json();
+                    showToast(JSON.stringify(err));
+                }
+            } catch (err) {
+                showToast('Error saving group');
+            }
+        }
+
+        async function deleteGroup(code) {
+            if (!confirm(`Delete Group ${code}? (Cannot delete if ledgers belong to it)`)) return;
+            try {
+                const res = await fetch(`/api/groups/${code}/`, { method: 'DELETE' });
+                if (res.ok) {
+                    showToast(`Group ${code} deleted`);
+                    fetchAll();
+                } else {
+                    const err = await res.json().catch(() => null);
+                    showToast(err ? JSON.stringify(err) : 'Failed to delete group (may be protected)');
+                }
+            } catch (err) {
+                showToast('Error deleting group');
+            }
+        }
+
+        /* ── LEDGER MASTER RENDER & CRUD ── */
+        function renderLedgers() {
+            const query = (document.getElementById('ledger-search').value || '').trim().toLowerCase();
+            const filtered = ledgers.filter(l => 
+                l.Ledgercode.toLowerCase().includes(query) ||
+                l.LEDGERNAME.toLowerCase().includes(query) ||
+                (l.group_name && l.group_name.toLowerCase().includes(query)) ||
+                (l.Add1 && l.Add1.toLowerCase().includes(query)) ||
+                (l.Add2 && l.Add2.toLowerCase().includes(query))
+            );
+            const tbody = document.getElementById('ledger-tbody');
+            if (!filtered.length) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">
+                    No ledgers found.
+                </td></tr>`;
+                return;
+            }
+            tbody.innerHTML = filtered.map(l => {
+                const add = [l.Add1, l.Add2, l.Add3].filter(Boolean).map(escapeHtml).join(', ') || '<span style="color:var(--text-dim);">-</span>';
+                return `
+                    <tr>
+                        <td><span class="code-pill">${escapeHtml(l.Ledgercode)}</span></td>
+                        <td><strong style="color:#fff;">${escapeHtml(l.LEDGERNAME)}</strong></td>
+                        <td><span class="code-pill">${l.Grpcode}</span> ${escapeHtml(l.group_name || '')}</td>
+                        <td>${getCategoryBadge(l.group_category || 'ASSETS')}</td>
+                        <td>${l.FirmCode ? `<span class="code-pill">${escapeHtml(l.FirmCode)}</span>` : '<span style="color:var(--text-dim);">All</span>'}</td>
+                        <td style="color: var(--text-muted); font-size: 0.82rem; max-width: 250px;">${add}</td>
+                        <td class="actions-cell">
+                            <button class="btn-action btn-edit" onclick="editLedger('${escapeHtml(l.Ledgercode)}')">✏️ Edit</button>
+                            <button class="btn-action btn-delete" onclick="deleteLedger('${escapeHtml(l.Ledgercode)}')">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterLedgers() { renderLedgers(); }
+
+        function openAddLedgerModal() {
+            editingLedgerCode = null;
+            document.getElementById('ledger-modal-title').innerText = '📖 Add Ledger Master';
+            document.getElementById('modal-ledger-code').value = '';
+            document.getElementById('modal-ledger-code').readOnly = false;
+            document.getElementById('modal-ledger-name').value = '';
+            populateSelectOptions();
+            if (groups.length > 0) {
+                document.getElementById('modal-ledger-group').value = groups[0].GrpCode;
+            }
+            document.getElementById('modal-ledger-firm').value = '';
+            document.getElementById('modal-ledger-add1').value = '';
+            document.getElementById('modal-ledger-add2').value = '';
+            document.getElementById('modal-ledger-add3').value = '';
+            openModal('ledgerModal');
+        }
+
+        function editLedger(code) {
+            const ledger = ledgers.find(l => l.Ledgercode === code);
+            if (!ledger) return;
+            editingLedgerCode = code;
+            document.getElementById('ledger-modal-title').innerText = '📖 Edit Ledger Master';
+            document.getElementById('modal-ledger-code').value = ledger.Ledgercode;
+            document.getElementById('modal-ledger-code').readOnly = true;
+            document.getElementById('modal-ledger-name').value = ledger.LEDGERNAME;
+            populateSelectOptions();
+            document.getElementById('modal-ledger-group').value = ledger.Grpcode;
+            document.getElementById('modal-ledger-firm').value = ledger.FirmCode || '';
+            document.getElementById('modal-ledger-add1').value = ledger.Add1 || '';
+            document.getElementById('modal-ledger-add2').value = ledger.Add2 || '';
+            document.getElementById('modal-ledger-add3').value = ledger.Add3 || '';
+            openModal('ledgerModal');
+        }
+
+        async function saveLedger(e) {
+            e.preventDefault();
+            const grpVal = document.getElementById('modal-ledger-group').value;
+            if (!grpVal) {
+                showToast('Please select a valid Group');
+                return;
+            }
+
+            const payload = {
+                Ledgercode: document.getElementById('modal-ledger-code').value.trim(),
+                LEDGERNAME: document.getElementById('modal-ledger-name').value.trim(),
+                Grpcode: parseInt(grpVal),
+                FirmCode: document.getElementById('modal-ledger-firm').value || null,
+                Add1: document.getElementById('modal-ledger-add1').value.trim(),
+                Add2: document.getElementById('modal-ledger-add2').value.trim(),
+                Add3: document.getElementById('modal-ledger-add3').value.trim()
+            };
+
+            const url = editingLedgerCode ? `/api/ledgers/${encodeURIComponent(editingLedgerCode)}/` : '/api/ledgers/';
+            const method = editingLedgerCode ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    showToast(editingLedgerCode ? 'Ledger updated' : 'Ledger created');
+                    closeModal('ledgerModal');
+                    fetchAll();
+                } else {
+                    const err = await res.json();
+                    showToast(JSON.stringify(err));
+                }
+            } catch (err) {
+                showToast('Error saving ledger');
+            }
+        }
+
+        async function deleteLedger(code) {
+            if (!confirm(`Are you sure you want to delete Ledger "${code}"?`)) return;
+            try {
+                const res = await fetch(`/api/ledgers/${encodeURIComponent(code)}/`, { method: 'DELETE' });
+                if (res.ok) {
+                    showToast(`Ledger ${code} deleted`);
+                    fetchAll();
+                } else {
+                    showToast('Failed to delete ledger');
+                }
+            } catch (err) {
+                showToast('Error deleting ledger');
+            }
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', fetchAll);
+    </script>
+</body>
+</html>
