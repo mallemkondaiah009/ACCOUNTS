@@ -78,10 +78,12 @@ class LedgerMasterSerializer(serializers.ModelSerializer):
     LEDGERNAME = serializers.CharField(source='ledger_name', max_length=50)
     Grpcode = serializers.PrimaryKeyRelatedField(
         source='group',
-        queryset=GroupMaster.objects.all()
+        queryset=GroupMaster.objects.all(),
+        required=False,
+        allow_null=True
     )
-    group_name = serializers.CharField(source='group.grp_name', read_only=True)
-    group_category = serializers.CharField(source='group.category', read_only=True)
+    group_name = serializers.CharField(source='group.grp_name', read_only=True, allow_null=True)
+    group_category = serializers.CharField(source='group.category', read_only=True, allow_null=True)
     FirmCode = serializers.PrimaryKeyRelatedField(
         source='firm',
         queryset=FirmMaster.objects.all(),
@@ -89,6 +91,7 @@ class LedgerMasterSerializer(serializers.ModelSerializer):
         allow_null=True
     )
     firm_name = serializers.CharField(source='firm.firm_name', read_only=True)
+    is_firm_ledger = serializers.BooleanField(read_only=True)
     Add1 = serializers.CharField(source='add1', max_length=50, required=False, allow_blank=True)
     Add2 = serializers.CharField(source='add2', max_length=50, required=False, allow_blank=True)
     Add3 = serializers.CharField(source='add3', max_length=50, required=False, allow_blank=True)
@@ -103,13 +106,14 @@ class LedgerMasterSerializer(serializers.ModelSerializer):
             'group_category',
             'FirmCode',
             'firm_name',
+            'is_firm_ledger',
             'Add1',
             'Add2',
             'Add3',
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['created_at', 'updated_at']
+        read_only_fields = ['is_firm_ledger', 'created_at', 'updated_at']
 
     def validate_Ledgercode(self, value):
         validate_alphanumeric(value, 'Ledgercode')
@@ -118,3 +122,14 @@ class LedgerMasterSerializer(serializers.ModelSerializer):
     def validate_LEDGERNAME(self, value):
         validate_alphanumeric(value, 'LEDGERNAME')
         return value.strip()
+
+    def validate(self, attrs):
+        instance = getattr(self, 'instance', None)
+        if instance and instance.is_firm_ledger:
+            new_name = attrs.get('ledger_name')
+            if new_name and new_name.strip() != instance.ledger_name:
+                raise serializers.ValidationError({
+                    'LEDGERNAME': 'Ledger name for a Firm ledger is managed by Firm Master and cannot be edited in Ledger Master.'
+                })
+        return attrs
+

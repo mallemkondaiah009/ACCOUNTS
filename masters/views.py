@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404
+from django.db import transaction
 from django.db.models import Q
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -11,6 +12,7 @@ from .serializers import (
     GroupMasterSerializer,
     LedgerMasterSerializer
 )
+from .signals import SyncGuard
 
 
 class StandardPagination(PageNumberPagination):
@@ -73,21 +75,57 @@ class FirmMasterDetailAPIView(APIView):
         serializer = FirmMasterSerializer(firm)
         return Response(serializer.data)
 
+    def _update_firm(self, firm, data, partial=False):
+        new_code = data.get('FirmCode') or data.get('firm_code')
+        if new_code:
+            new_code = str(new_code).strip()
+            if new_code != firm.firm_code:
+                if FirmMaster.objects.filter(firm_code=new_code).exists():
+                    return Response({'FirmCode': ['Firm with this code already exists.']}, status=status.HTTP_400_BAD_REQUEST)
+                if LedgerMaster.objects.filter(ledger_code=new_code).exclude(ledger_code=firm.firm_code).exists():
+                    return Response({'FirmCode': ['Ledger with this code already exists.']}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = FirmMasterSerializer(firm, data=data, partial=partial)
+        if serializer.is_valid():
+            old_code = firm.firm_code
+            target_code = serializer.validated_data.get('firm_code', old_code)
+            target_name = serializer.validated_data.get('firm_name', firm.firm_name)
+
+            with transaction.atomic():
+                with SyncGuard():
+                    if target_code != old_code:
+                        # 1. Unlink FK reference from ledger before changing FirmMaster PK
+                        LedgerMaster.objects.filter(ledger_code=old_code).update(firm=None)
+                        # 2. Update FirmMaster PK and name
+                        FirmMaster.objects.filter(firm_code=old_code).update(
+                            firm_code=target_code,
+                            firm_name=target_name
+                        )
+                        # 3. Update corresponding LedgerMaster PK and relink to updated firm
+                        LedgerMaster.objects.filter(ledger_code=old_code).update(
+                            ledger_code=target_code,
+                            ledger_name=target_name,
+                            firm_id=target_code,
+                            is_firm_ledger=True
+                        )
+                        firm = FirmMaster.objects.get(firm_code=target_code)
+                    else:
+                        firm.firm_name = target_name
+                        firm.save()
+                        LedgerMaster.objects.filter(ledger_code=old_code).update(
+                            ledger_name=target_name
+                        )
+
+            return Response(FirmMasterSerializer(firm).data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
     def put(self, request, pk):
         firm = self.get_object(pk)
-        serializer = FirmMasterSerializer(firm, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return self._update_firm(firm, request.data, partial=False)
 
     def patch(self, request, pk):
         firm = self.get_object(pk)
-        serializer = FirmMasterSerializer(firm, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return self._update_firm(firm, request.data, partial=True)
 
     def delete(self, request, pk):
         firm = self.get_object(pk)
@@ -221,8 +259,9 @@ class LedgerMasterListCreateAPIView(APIView):
     def post(self, request):
         serializer = LedgerMasterSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            ledger = serializer.save()
+            ledger.refresh_from_db()
+            return Response(LedgerMasterSerializer(ledger).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -244,7 +283,12 @@ class LedgerMasterDetailAPIView(APIView):
 
     def put(self, request, pk):
         ledger = self.get_object(pk)
-        serializer = LedgerMasterSerializer(ledger, data=request.data)
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        if ledger.is_firm_ledger:
+            # Ledger code and ledger name are locked to firm master values
+            data['Ledgercode'] = ledger.ledger_code
+            data['LEDGERNAME'] = ledger.ledger_name
+        serializer = LedgerMasterSerializer(ledger, data=data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -252,7 +296,12 @@ class LedgerMasterDetailAPIView(APIView):
 
     def patch(self, request, pk):
         ledger = self.get_object(pk)
-        serializer = LedgerMasterSerializer(ledger, data=request.data, partial=True)
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        if ledger.is_firm_ledger:
+            # Prevent changing ledger_code or ledger_name
+            data.pop('Ledgercode', None)
+            data.pop('LEDGERNAME', None)
+        serializer = LedgerMasterSerializer(ledger, data=data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)

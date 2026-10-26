@@ -111,6 +111,8 @@ class LedgerMaster(models.Model):
         on_delete=models.PROTECT,
         related_name='ledgers',
         db_column='Grpcode',
+        null=True,
+        blank=True,
         help_text="5 numeric Foreign Key to Group Master GrpCode"
     )
     firm = models.ForeignKey(
@@ -142,6 +144,11 @@ class LedgerMaster(models.Model):
         default='',
         db_column='Add3',
         help_text="Address Line 3 (50 characters)"
+    )
+    is_firm_ledger = models.BooleanField(
+        default=False,
+        db_column='IsFirmLedger',
+        help_text="Indicates whether this ledger is automatically generated from Firm Master"
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

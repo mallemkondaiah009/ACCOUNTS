@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accounting Master Hub - Django REST Framework</title>
+    <title>Accounting Master Management</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -781,25 +781,7 @@
     <header>
         <div class="header-inner">
             <div class="brand">
-                <div class="brand-icon">DRF</div>
-                <div>
-                    <h1 class="brand-title">Accounting Master Management</h1>
-                    <div class="brand-sub">Firm Master • Group Master • Ledger Master (Django REST Framework)</div>
-                </div>
-            </div>
-            <div class="header-links">
-                <a href="/api/firms/" target="_blank" class="btn-link">
-                    <span>🏢</span> Firms API
-                </a>
-                <a href="/api/groups/" target="_blank" class="btn-link">
-                    <span>🗂️</span> Groups API
-                </a>
-                <a href="/api/ledgers/" target="_blank" class="btn-link">
-                    <span>📖</span> Ledgers API
-                </a>
-                <a href="/admin/" target="_blank" class="btn-link">
-                    <span>⚙️</span> Django Admin
-                </a>
+                <h1 class="brand-title">Accounting Master Management</h1>
             </div>
         </div>
     </header>
@@ -810,7 +792,6 @@
             <div class="stat-card" onclick="switchTab('firm')" style="cursor: pointer;">
                 <div class="stat-header">
                     <span class="stat-title">Firm Master</span>
-                    <span class="stat-pill">5 Alpha-Numeric</span>
                 </div>
                 <div class="stat-val" id="stat-firms">0</div>
                 <div class="stat-sub">Companies & Accounting Branches</div>
@@ -818,7 +799,6 @@
             <div class="stat-card" onclick="switchTab('group')" style="cursor: pointer;">
                 <div class="stat-header">
                     <span class="stat-title">Group Master</span>
-                    <span class="stat-pill">Auto No & Categories</span>
                 </div>
                 <div class="stat-val" id="stat-groups">0</div>
                 <div class="stat-sub">INCOME • EXPENSES • ASSETS • LIABILITIES</div>
@@ -826,7 +806,6 @@
             <div class="stat-card" onclick="switchTab('ledger')" style="cursor: pointer;">
                 <div class="stat-header">
                     <span class="stat-title">Ledger Master</span>
-                    <span class="stat-pill">Linked to Group & Firm</span>
                 </div>
                 <div class="stat-val" id="stat-ledgers">0</div>
                 <div class="stat-sub">Account Heads with 3 Address Lines</div>
@@ -930,17 +909,16 @@
                     <table>
                         <thead>
                             <tr>
-                                <th style="width: 130px;">Ledger Code</th>
+                                <th style="width: 140px;">Ledger Code</th>
                                 <th>Ledger Name</th>
                                 <th>Group (GrpCode)</th>
-                                <th style="width: 130px;">Category</th>
-                                <th style="width: 110px;">Firm</th>
+                                <th style="width: 140px;">Category</th>
                                 <th>Address (Add1, Add2, Add3)</th>
                                 <th style="width: 130px; text-align: right;">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="ledger-tbody">
-                            <tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading ledgers...</td></tr>
+                            <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading ledgers...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -1037,6 +1015,9 @@
             </div>
             <form onsubmit="saveLedger(event)">
                 <div class="modal-body">
+                    <div id="firm-ledger-notice" style="display:none; margin-bottom: 1.25rem; padding: 10px 14px; background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 8px; font-size: 0.8rem; color: #c7d2fe;">
+                        🔒 <strong>Firm Account:</strong> Ledger Code and Ledger Name are managed by Firm Master and cannot be changed here. Group and Address lines can be edited below.
+                    </div>
                     <div class="form-grid-2">
                         <!-- Code & Name -->
                         <div class="form-group">
@@ -1054,21 +1035,13 @@
                             <input type="text" id="modal-ledger-name" class="form-control" maxlength="50" required placeholder="e.g. HDFCBANK, CASH">
                         </div>
 
-                        <!-- Dropdowns -->
-                        <div class="form-group">
+                        <!-- Group Dropdown (Full width) -->
+                        <div class="form-group form-full">
                             <label>
-                                <span>Group (GrpCode Dropdown)</span>
+                                <span>Group (GrpCode Dropdown) <span style="font-weight: normal; color: var(--text-muted);">(Optional)</span></span>
                             </label>
-                            <select id="modal-ledger-group" class="form-control" required>
-                                <option value="">Loading groups...</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>
-                                <span>Firm (Optional)</span>
-                            </label>
-                            <select id="modal-ledger-firm" class="form-control">
-                                <option value="">None / All Firms</option>
+                            <select id="modal-ledger-group" class="form-control">
+                                <option value="">Select Group (Optional)...</option>
                             </select>
                         </div>
 
@@ -1174,16 +1147,6 @@
                     ledgerGrpSelect.innerHTML = html;
                 }
             }
-
-            // 3. Ledger Firm Dropdown
-            const ledgerFirmSelect = document.getElementById('modal-ledger-firm');
-            if (ledgerFirmSelect) {
-                let html = '<option value="">None / All Firms</option>';
-                firms.forEach(f => {
-                    html += `<option value="${f.FirmCode}">${f.FirmCode} - ${escapeHtml(f.Firmname)}</option>`;
-                });
-                ledgerFirmSelect.innerHTML = html;
-            }
         }
 
         function escapeHtml(str) {
@@ -1266,8 +1229,11 @@
         function openAddFirmModal() {
             editingFirmCode = null;
             document.getElementById('firm-modal-title').innerText = '🏢 Add Firm Master';
-            document.getElementById('modal-firm-code').value = '';
-            document.getElementById('modal-firm-code').readOnly = false;
+            const codeInput = document.getElementById('modal-firm-code');
+            codeInput.value = '';
+            codeInput.readOnly = false;
+            codeInput.style.opacity = '1';
+            codeInput.style.cursor = 'text';
             document.getElementById('modal-firm-name').value = '';
             openModal('firmModal');
         }
@@ -1277,8 +1243,11 @@
             if (!firm) return;
             editingFirmCode = code;
             document.getElementById('firm-modal-title').innerText = '🏢 Edit Firm Master';
-            document.getElementById('modal-firm-code').value = firm.FirmCode;
-            document.getElementById('modal-firm-code').readOnly = true;
+            const codeInput = document.getElementById('modal-firm-code');
+            codeInput.value = firm.FirmCode;
+            codeInput.readOnly = false;
+            codeInput.style.opacity = '1';
+            codeInput.style.cursor = 'text';
             document.getElementById('modal-firm-name').value = firm.Firmname;
             openModal('firmModal');
         }
@@ -1463,18 +1432,28 @@
             }
             tbody.innerHTML = filtered.map(l => {
                 const add = [l.Add1, l.Add2, l.Add3].filter(Boolean).map(escapeHtml).join(', ') || '<span style="color:var(--text-dim);">-</span>';
+
+                const actionBtns = `
+                    <button class="btn-action btn-edit" onclick="editLedger('${escapeHtml(l.Ledgercode)}')">✏️ Edit</button>
+                    <button class="btn-action btn-delete" onclick="deleteLedger('${escapeHtml(l.Ledgercode)}')">🗑️</button>
+                `;
+
+                const groupDisplay = l.Grpcode 
+                    ? `<span class="code-pill">${l.Grpcode}</span> ${escapeHtml(l.group_name || '')}`
+                    : `<span style="color:var(--text-dim); font-size:0.78rem; font-style:italic;">Not assigned</span>`;
+
+                const categoryDisplay = l.group_category
+                    ? getCategoryBadge(l.group_category)
+                    : `<span style="color:var(--text-dim); font-size:0.78rem; font-style:italic;">-</span>`;
+
                 return `
                     <tr>
                         <td><span class="code-pill">${escapeHtml(l.Ledgercode)}</span></td>
                         <td><strong style="color:#fff;">${escapeHtml(l.LEDGERNAME)}</strong></td>
-                        <td><span class="code-pill">${l.Grpcode}</span> ${escapeHtml(l.group_name || '')}</td>
-                        <td>${getCategoryBadge(l.group_category || 'ASSETS')}</td>
-                        <td>${l.FirmCode ? `<span class="code-pill">${escapeHtml(l.FirmCode)}</span>` : '<span style="color:var(--text-dim);">All</span>'}</td>
+                        <td>${groupDisplay}</td>
+                        <td>${categoryDisplay}</td>
                         <td style="color: var(--text-muted); font-size: 0.82rem; max-width: 250px;">${add}</td>
-                        <td class="actions-cell">
-                            <button class="btn-action btn-edit" onclick="editLedger('${escapeHtml(l.Ledgercode)}')">✏️ Edit</button>
-                            <button class="btn-action btn-delete" onclick="deleteLedger('${escapeHtml(l.Ledgercode)}')">🗑️</button>
-                        </td>
+                        <td class="actions-cell">${actionBtns}</td>
                     </tr>
                 `;
             }).join('');
@@ -1485,14 +1464,23 @@
         function openAddLedgerModal() {
             editingLedgerCode = null;
             document.getElementById('ledger-modal-title').innerText = '📖 Add Ledger Master';
-            document.getElementById('modal-ledger-code').value = '';
-            document.getElementById('modal-ledger-code').readOnly = false;
-            document.getElementById('modal-ledger-name').value = '';
+            const notice = document.getElementById('firm-ledger-notice');
+            if (notice) notice.style.display = 'none';
+
+            const codeInput = document.getElementById('modal-ledger-code');
+            codeInput.value = '';
+            codeInput.readOnly = false;
+            codeInput.style.opacity = '1';
+            codeInput.style.cursor = 'text';
+
+            const nameInput = document.getElementById('modal-ledger-name');
+            nameInput.value = '';
+            nameInput.readOnly = false;
+            nameInput.style.opacity = '1';
+            nameInput.style.cursor = 'text';
+
             populateSelectOptions();
-            if (groups.length > 0) {
-                document.getElementById('modal-ledger-group').value = groups[0].GrpCode;
-            }
-            document.getElementById('modal-ledger-firm').value = '';
+            document.getElementById('modal-ledger-group').value = '';
             document.getElementById('modal-ledger-add1').value = '';
             document.getElementById('modal-ledger-add2').value = '';
             document.getElementById('modal-ledger-add3').value = '';
@@ -1503,13 +1491,31 @@
             const ledger = ledgers.find(l => l.Ledgercode === code);
             if (!ledger) return;
             editingLedgerCode = code;
-            document.getElementById('ledger-modal-title').innerText = '📖 Edit Ledger Master';
-            document.getElementById('modal-ledger-code').value = ledger.Ledgercode;
-            document.getElementById('modal-ledger-code').readOnly = true;
-            document.getElementById('modal-ledger-name').value = ledger.LEDGERNAME;
+
+            const isFirm = ledger.is_firm_ledger === true;
+            document.getElementById('ledger-modal-title').innerText = isFirm 
+                ? '📖 Edit Ledger Master (Firm Account)' 
+                : '📖 Edit Ledger Master';
+
+            const notice = document.getElementById('firm-ledger-notice');
+            if (notice) notice.style.display = isFirm ? 'block' : 'none';
+
+            // Ledger code is primary key, read-only when editing
+            const codeInput = document.getElementById('modal-ledger-code');
+            codeInput.value = ledger.Ledgercode;
+            codeInput.readOnly = true;
+            codeInput.style.opacity = '0.7';
+            codeInput.style.cursor = 'not-allowed';
+
+            // Ledger name is locked for Firm ledgers, editable for regular ledgers
+            const nameInput = document.getElementById('modal-ledger-name');
+            nameInput.value = ledger.LEDGERNAME;
+            nameInput.readOnly = isFirm;
+            nameInput.style.opacity = isFirm ? '0.7' : '1';
+            nameInput.style.cursor = isFirm ? 'not-allowed' : 'text';
+
             populateSelectOptions();
-            document.getElementById('modal-ledger-group').value = ledger.Grpcode;
-            document.getElementById('modal-ledger-firm').value = ledger.FirmCode || '';
+            document.getElementById('modal-ledger-group').value = ledger.Grpcode || '';
             document.getElementById('modal-ledger-add1').value = ledger.Add1 || '';
             document.getElementById('modal-ledger-add2').value = ledger.Add2 || '';
             document.getElementById('modal-ledger-add3').value = ledger.Add3 || '';
@@ -1519,16 +1525,11 @@
         async function saveLedger(e) {
             e.preventDefault();
             const grpVal = document.getElementById('modal-ledger-group').value;
-            if (!grpVal) {
-                showToast('Please select a valid Group');
-                return;
-            }
 
             const payload = {
                 Ledgercode: document.getElementById('modal-ledger-code').value.trim(),
                 LEDGERNAME: document.getElementById('modal-ledger-name').value.trim(),
-                Grpcode: parseInt(grpVal),
-                FirmCode: document.getElementById('modal-ledger-firm').value || null,
+                Grpcode: grpVal ? parseInt(grpVal) : null,
                 Add1: document.getElementById('modal-ledger-add1').value.trim(),
                 Add2: document.getElementById('modal-ledger-add2').value.trim(),
                 Add3: document.getElementById('modal-ledger-add3').value.trim()
@@ -1564,7 +1565,8 @@
                     showToast(`Ledger ${code} deleted`);
                     fetchAll();
                 } else {
-                    showToast('Failed to delete ledger');
+                    const err = await res.json().catch(() => null);
+                    showToast(err && err.detail ? err.detail : 'Failed to delete ledger');
                 }
             } catch (err) {
                 showToast('Error deleting ledger');

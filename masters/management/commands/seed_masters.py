@@ -6,20 +6,6 @@ class Command(BaseCommand):
     help = 'Seeds sample data for Firm Master, Group Master, and Ledger Master from specification sheet'
 
     def handle(self, *args, **options):
-        self.stdout.write("Seeding Firm Master...")
-        firms_data = [
-            {"firm_code": "HOTEL", "firm_name": "PLATINUM"},
-            {"firm_code": "GAR", "firm_name": "GARDEN"},
-        ]
-        firms = {}
-        for f in firms_data:
-            obj, created = FirmMaster.objects.update_or_create(
-                firm_code=f["firm_code"],
-                defaults={"firm_name": f["firm_name"]}
-            )
-            firms[obj.firm_code] = obj
-            self.stdout.write(f"  {'Created' if created else 'Updated'} Firm: {obj}")
-
         self.stdout.write("Seeding Group Master...")
         groups_data = [
             {"grp_code": 1, "grp_name": "General Exp", "category": GroupCategory.EXPENSES},
@@ -41,6 +27,20 @@ class Command(BaseCommand):
             )
             groups[obj.grp_code] = obj
             self.stdout.write(f"  {'Created' if created else 'Updated'} Group: {obj}")
+
+        self.stdout.write("Seeding Firm Master (automatically generates Firm Ledgers)...")
+        firms_data = [
+            {"firm_code": "HOTEL", "firm_name": "PLATINUM"},
+            {"firm_code": "GAR", "firm_name": "GARDEN"},
+        ]
+        firms = {}
+        for f in firms_data:
+            obj, created = FirmMaster.objects.update_or_create(
+                firm_code=f["firm_code"],
+                defaults={"firm_name": f["firm_name"]}
+            )
+            firms[obj.firm_code] = obj
+            self.stdout.write(f"  {'Created' if created else 'Updated'} Firm: {obj}")
 
         self.stdout.write("Seeding Ledger Master...")
         ledgers_data = [
