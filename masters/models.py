@@ -93,7 +93,6 @@ class LedgerMaster(models.Model):
     - Add1: 50 alpha numeric
     - Add2: 50 alpha numeric
     - Add3: 50 alpha numeric
-    - Optional Firm foreign key for multi-company ledger setup
     """
     ledger_code = models.CharField(
         max_length=5,
@@ -114,15 +113,6 @@ class LedgerMaster(models.Model):
         null=True,
         blank=True,
         help_text="5 numeric Foreign Key to Group Master GrpCode"
-    )
-    firm = models.ForeignKey(
-        FirmMaster,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='ledgers',
-        db_column='FirmCode',
-        help_text="Optional Foreign Key to Firm Master"
     )
     add1 = models.CharField(
         max_length=50,
@@ -145,11 +135,6 @@ class LedgerMaster(models.Model):
         db_column='Add3',
         help_text="Address Line 3 (50 characters)"
     )
-    is_firm_ledger = models.BooleanField(
-        default=False,
-        db_column='IsFirmLedger',
-        help_text="Indicates whether this ledger is automatically generated from Firm Master"
-    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -161,3 +146,79 @@ class LedgerMaster(models.Model):
 
     def __str__(self):
         return f"{self.ledger_code} - {self.ledger_name}"
+
+
+class VoucherType(models.TextChoices):
+    CASH_RECEIPT = 'CR', 'Cash Receipt'
+    BANK_RECEIPT = 'BR', 'Bank Receipt'
+    CASH_PAYMENT = 'CP', 'Cash Payment'
+    BANK_PAYMENT = 'BP', 'Bank Payment'
+
+
+class TransactionType(models.TextChoices):
+    CREDIT = 'C', 'Credit'
+    DEBIT = 'D', 'Debit'
+
+
+class Transaction(models.Model):
+    """
+    Transaction Table (trans) as specified in new software.xlsx:
+    - vch_type: char(5) (CR, BR, CP, BP)
+    - vch_number: numeric / int
+    - vch_date: date
+    - firm: FK to FirmMaster (FIRMCODE)
+    - ledger_code: char(5)
+    - ref_code: char(5)
+    - remarks: char(50)
+    - chq_no: char(10) (optional/nullable)
+    - amount: float / decimal
+    - type: char(1) ('C' for Credit, 'D' for Debit)
+    - contra: int (0 for Primary entry, 1 for Contra balancing entry)
+    """
+    firm = models.ForeignKey(
+        FirmMaster,
+        on_delete=models.PROTECT,
+        related_name='transactions',
+        db_column='firm_code',
+        help_text="Firm code reference"
+    )
+    vch_type = models.CharField(
+        max_length=5,
+        choices=VoucherType.choices,
+        default=VoucherType.CASH_RECEIPT,
+        db_column='vch_type'
+    )
+    vch_number = models.IntegerField(db_column='vch_number')
+    vch_date = models.DateField(db_column='vch_date')
+    ledger_code = models.CharField(max_length=5, db_column='Ledger_code')
+    ref_code = models.CharField(max_length=5, db_column='ref_code')
+    remarks = models.CharField(max_length=50, blank=True, default='', db_column='remarks')
+    chq_no = models.CharField(max_length=10, blank=True, null=True, db_column='Chq No')
+    amount = models.DecimalField(max_digits=12, decimal_places=2, db_column='amount')
+    type = models.CharField(
+        max_length=1,
+        choices=TransactionType.choices,
+        db_column='type'
+    )
+    contra = models.IntegerField(
+        choices=[(0, 'Primary'), (1, 'Contra')],
+        default=0,
+        db_column='CONTRA'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'trans'
+        verbose_name = 'Transaction'
+        verbose_name_plural = 'Transactions'
+        ordering = ['-vch_date', '-vch_number', 'contra']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['firm', 'vch_type', 'vch_number', 'contra'],
+                name='unique_voucher_entry_line'
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.firm_id} | {self.vch_type}-{self.vch_number} | {self.type} {self.amount} ({self.ledger_code})"

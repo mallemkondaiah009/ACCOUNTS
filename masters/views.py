@@ -1,18 +1,27 @@
 from django.shortcuts import render, get_object_or_404
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Max
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 
-from .models import FirmMaster, GroupMaster, LedgerMaster, GroupCategory
+from .models import (
+    FirmMaster,
+    GroupMaster,
+    LedgerMaster,
+    GroupCategory,
+    Transaction,
+    VoucherType,
+    TransactionType
+)
 from .serializers import (
     FirmMasterSerializer,
     GroupMasterSerializer,
-    LedgerMasterSerializer
+    LedgerMasterSerializer,
+    TransactionSerializer,
+    CashReceiptCreateSerializer
 )
-from .signals import SyncGuard
 
 
 class StandardPagination(PageNumberPagination):
@@ -82,8 +91,6 @@ class FirmMasterDetailAPIView(APIView):
             if new_code != firm.firm_code:
                 if FirmMaster.objects.filter(firm_code=new_code).exists():
                     return Response({'FirmCode': ['Firm with this code already exists.']}, status=status.HTTP_400_BAD_REQUEST)
-                if LedgerMaster.objects.filter(ledger_code=new_code).exclude(ledger_code=firm.firm_code).exists():
-                    return Response({'FirmCode': ['Ledger with this code already exists.']}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = FirmMasterSerializer(firm, data=data, partial=partial)
         if serializer.is_valid():
@@ -92,29 +99,15 @@ class FirmMasterDetailAPIView(APIView):
             target_name = serializer.validated_data.get('firm_name', firm.firm_name)
 
             with transaction.atomic():
-                with SyncGuard():
-                    if target_code != old_code:
-                        # 1. Unlink FK reference from ledger before changing FirmMaster PK
-                        LedgerMaster.objects.filter(ledger_code=old_code).update(firm=None)
-                        # 2. Update FirmMaster PK and name
-                        FirmMaster.objects.filter(firm_code=old_code).update(
-                            firm_code=target_code,
-                            firm_name=target_name
-                        )
-                        # 3. Update corresponding LedgerMaster PK and relink to updated firm
-                        LedgerMaster.objects.filter(ledger_code=old_code).update(
-                            ledger_code=target_code,
-                            ledger_name=target_name,
-                            firm_id=target_code,
-                            is_firm_ledger=True
-                        )
-                        firm = FirmMaster.objects.get(firm_code=target_code)
-                    else:
-                        firm.firm_name = target_name
-                        firm.save()
-                        LedgerMaster.objects.filter(ledger_code=old_code).update(
-                            ledger_name=target_name
-                        )
+                if target_code != old_code:
+                    FirmMaster.objects.filter(firm_code=old_code).update(
+                        firm_code=target_code,
+                        firm_name=target_name
+                    )
+                    firm = FirmMaster.objects.get(firm_code=target_code)
+                else:
+                    firm.firm_name = target_name
+                    firm.save()
 
             return Response(FirmMasterSerializer(firm).data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -225,7 +218,7 @@ class LedgerMasterListCreateAPIView(APIView):
     POST /api/ledgers/ - Create a new Ledger Master
     """
     def get(self, request):
-        queryset = LedgerMaster.objects.select_related('group', 'firm').all().order_by('ledger_code')
+        queryset = LedgerMaster.objects.select_related('group').all().order_by('ledger_code')
         grp_code = request.query_params.get('Grpcode')
         if grp_code:
             queryset = queryset.filter(group__grp_code=grp_code)
@@ -233,10 +226,6 @@ class LedgerMasterListCreateAPIView(APIView):
         category = request.query_params.get('category')
         if category:
             queryset = queryset.filter(group__category=category.upper())
-
-        firm_code = request.query_params.get('FirmCode')
-        if firm_code:
-            queryset = queryset.filter(firm__firm_code=firm_code)
 
         search = request.query_params.get('search')
         if search:
@@ -283,12 +272,7 @@ class LedgerMasterDetailAPIView(APIView):
 
     def put(self, request, pk):
         ledger = self.get_object(pk)
-        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
-        if ledger.is_firm_ledger:
-            # Ledger code and ledger name are locked to firm master values
-            data['Ledgercode'] = ledger.ledger_code
-            data['LEDGERNAME'] = ledger.ledger_name
-        serializer = LedgerMasterSerializer(ledger, data=data)
+        serializer = LedgerMasterSerializer(ledger, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -296,12 +280,7 @@ class LedgerMasterDetailAPIView(APIView):
 
     def patch(self, request, pk):
         ledger = self.get_object(pk)
-        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
-        if ledger.is_firm_ledger:
-            # Prevent changing ledger_code or ledger_name
-            data.pop('Ledgercode', None)
-            data.pop('LEDGERNAME', None)
-        serializer = LedgerMasterSerializer(ledger, data=data, partial=True)
+        serializer = LedgerMasterSerializer(ledger, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -311,3 +290,170 @@ class LedgerMasterDetailAPIView(APIView):
         ledger = self.get_object(pk)
         ledger.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class NextVoucherNumberAPIView(APIView):
+    """
+    APIView to fetch the next sequential voucher number for a given firm and voucher type.
+    GET /api/transactions/next-vch-no/?firm_code=ACC&vch_type=CR
+    """
+    def get(self, request):
+        firm_code = request.query_params.get('firm_code')
+        vch_type = request.query_params.get('vch_type', VoucherType.CASH_RECEIPT)
+        if not firm_code:
+            return Response(
+                {'error': 'firm_code query parameter is required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        max_num = Transaction.objects.filter(
+            firm_id=firm_code,
+            vch_type=vch_type
+        ).aggregate(Max('vch_number'))['vch_number__max'] or 0
+        return Response({
+            'firm_code': firm_code,
+            'vch_type': vch_type,
+            'next_vch_number': max_num + 1
+        })
+
+
+class CashReceiptCreateAPIView(APIView):
+    """
+    APIView to post Cash Receipt (CR) implementing double-entry:
+    - Row 1: CONTRA=0, type='C' (Credit) for the selected Ledger
+    - Row 2: CONTRA=1, type='D' (Debit) for CASH ledger
+    POST /api/transactions/cash-receipt/
+    """
+    def post(self, request):
+        serializer = CashReceiptCreateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        data = serializer.validated_data
+        firm_code = data['firm_code']
+        vch_date = data['vch_date']
+        ledger_code = data['ledger_code']
+        amount = data['amount']
+        remarks = data.get('remarks', '').strip()
+
+        with transaction.atomic():
+            firm = FirmMaster.objects.select_for_update().get(firm_code=firm_code)
+
+            # Ensure a standard CASH ledger exists so reports calculate balances properly
+            cash_ledger = LedgerMaster.objects.filter(ledger_code='CASH').first()
+            if not cash_ledger:
+                cash_group = GroupMaster.objects.filter(category=GroupCategory.ASSETS).first()
+                if not cash_group:
+                    cash_group = GroupMaster.objects.create(
+                        grp_name='Cash in Hand',
+                        category=GroupCategory.ASSETS
+                    )
+                LedgerMaster.objects.create(
+                    ledger_code='CASH',
+                    ledger_name='Cash Account',
+                    group=cash_group
+                )
+
+            # Auto calculate next voucher number
+            max_num = Transaction.objects.filter(
+                firm=firm,
+                vch_type=VoucherType.CASH_RECEIPT
+            ).aggregate(Max('vch_number'))['vch_number__max'] or 0
+            vch_number = max_num + 1
+
+            # 1. Primary Line (CONTRA = 0, Credit 'C')
+            t1 = Transaction.objects.create(
+                firm=firm,
+                vch_type=VoucherType.CASH_RECEIPT,
+                vch_number=vch_number,
+                vch_date=vch_date,
+                ledger_code=ledger_code,
+                ref_code='CASH',
+                remarks=remarks,
+                chq_no=None,
+                amount=amount,
+                type=TransactionType.CREDIT,
+                contra=0
+            )
+
+            # 2. Contra Balancing Line (CONTRA = 1, Debit 'D')
+            t2 = Transaction.objects.create(
+                firm=firm,
+                vch_type=VoucherType.CASH_RECEIPT,
+                vch_number=vch_number,
+                vch_date=vch_date,
+                ledger_code='CASH',
+                ref_code=ledger_code,
+                remarks=remarks,
+                chq_no=None,
+                amount=amount,
+                type=TransactionType.DEBIT,
+                contra=1
+            )
+
+        return Response({
+            'message': f'Cash Receipt #{vch_number} posted successfully.',
+            'vch_number': vch_number,
+            'firm_code': firm_code,
+            'entries': TransactionSerializer([t1, t2], many=True).data
+        }, status=status.HTTP_201_CREATED)
+
+
+class TransactionListAPIView(APIView):
+    """
+    APIView for listing recorded transactions with filtering.
+    GET /api/transactions/ - Supports ?firm_code=..., ?vch_type=..., ?vch_number=..., ?search=...
+    """
+    def get(self, request):
+        queryset = Transaction.objects.select_related('firm').all().order_by('-vch_date', '-vch_number', 'contra')
+
+        firm_code = request.query_params.get('firm_code')
+        if firm_code:
+            queryset = queryset.filter(firm__firm_code=firm_code)
+
+        vch_type = request.query_params.get('vch_type')
+        if vch_type:
+            queryset = queryset.filter(vch_type=vch_type.upper())
+
+        vch_number = request.query_params.get('vch_number')
+        if vch_number:
+            queryset = queryset.filter(vch_number=vch_number)
+
+        search = request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(ledger_code__icontains=search) |
+                Q(ref_code__icontains=search) |
+                Q(remarks__icontains=search) |
+                Q(firm__firm_name__icontains=search)
+            )
+
+        paginator = StandardPagination()
+        page = paginator.paginate_queryset(queryset, request)
+        if page is not None:
+            serializer = TransactionSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        serializer = TransactionSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class VoucherDeleteAPIView(APIView):
+    """
+    APIView to delete an entire voucher (both primary and contra rows) atomically.
+    DELETE /api/transactions/<firm_code>/<vch_type>/<vch_number>/
+    """
+    def delete(self, request, firm_code, vch_type, vch_number):
+        with transaction.atomic():
+            rows = Transaction.objects.filter(
+                firm__firm_code=firm_code,
+                vch_type=vch_type.upper(),
+                vch_number=vch_number
+            )
+            count = rows.count()
+            if count == 0:
+                return Response({'error': 'Voucher not found.'}, status=status.HTTP_404_NOT_FOUND)
+            rows.delete()
+        return Response(
+            {'message': f'Voucher {vch_type} #{vch_number} ({count} entries) deleted.'},
+            status=status.HTTP_200_OK
+        )
+

@@ -303,6 +303,102 @@
             border: 1px solid rgba(14, 165, 233, 0.28);
         }
 
+        .stat-icon-receipt {
+            background: rgba(16, 185, 129, 0.12);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.28);
+        }
+
+        .cr-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1.5rem 1.75rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-card);
+            backdrop-filter: blur(12px);
+        }
+
+        .cr-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .cr-title-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .cr-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 0;
+            letter-spacing: -0.01em;
+        }
+
+        .cr-subtitle {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .cr-banner {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.82rem;
+            color: #a7f3d0;
+        }
+
+        .cr-preview {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+            border-radius: var(--radius-sm);
+            padding: 10px 14px;
+            margin-top: 1.25rem;
+            margin-bottom: 1.25rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .badge-credit {
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .badge-debit {
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
         .stat-title {
             color: var(--text-muted);
             font-size: 0.8rem;
@@ -962,6 +1058,16 @@
                 <div class="stat-val" id="stat-ledgers">0</div>
                 <div class="stat-sub">Account Heads with 3 Address Lines</div>
             </div>
+            <div class="stat-card" onclick="switchTab('receipt')" style="cursor: pointer;">
+                <div class="stat-header">
+                    <span class="stat-title">Cash Receipt</span>
+                    <div class="stat-icon-wrap stat-icon-receipt">
+                        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line><line x1="6" y1="15" x2="10" y2="15"></line><line x1="14" y1="15" x2="18" y2="15"></line></svg>
+                    </div>
+                </div>
+                <div class="stat-val" id="stat-receipts">0</div>
+                <div class="stat-sub">Double-Entry Vouchers (CR)</div>
+            </div>
         </div>
 
         <!-- NAVIGATION TABS -->
@@ -980,6 +1086,11 @@
                 <svg class="tab-icon" viewBox="0 0 24 24" width="17" height="17" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><line x1="8" y1="7" x2="16" y2="7"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
                 <span>Ledger Master</span>
                 <span class="tab-count" id="badge-ledger-count">0</span>
+            </button>
+            <button class="tab-btn" id="tab-btn-receipt" onclick="switchTab('receipt')">
+                <svg class="tab-icon" viewBox="0 0 24 24" width="17" height="17" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line><line x1="6" y1="15" x2="10" y2="15"></line><line x1="14" y1="15" x2="18" y2="15"></line></svg>
+                <span>Cash Receipt</span>
+                <span class="tab-count" id="badge-receipt-count">0</span>
             </button>
         </div>
 
@@ -1091,6 +1202,149 @@
                 </div>
             </div>
         </div>
+
+        <!-- ═════════ TAB 4: CASH RECEIPT (CR) ═════════ -->
+        <div id="tab-receipt" class="tab-content" style="display: none;">
+            <!-- CASH RECEIPT ENTRY FORM CARD -->
+            <div class="cr-card">
+                <div class="cr-card-header">
+                    <div class="cr-title-wrap">
+                        <div class="stat-icon-wrap stat-icon-receipt">
+                            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                                <line x1="2" y1="10" x2="22" y2="10"></line>
+                                <line x1="6" y1="15" x2="10" y2="15"></line>
+                                <line x1="14" y1="15" x2="18" y2="15"></line>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="cr-title">CASH RECEIPT ENTRY (CR)</h2>
+                            <div class="cr-subtitle">Double-entry voucher engine automatically recording Debit in Cash &amp; Credit in Party Ledger</div>
+                        </div>
+                    </div>
+                    <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); font-weight: 700; padding: 4px 10px;">Voucher Type: CR</span>
+                </div>
+
+                <form onsubmit="saveCashReceipt(event)" id="cr-form">
+                    <div class="form-grid-2">
+                        <!-- FIRMCODE Dropdown -->
+                        <div class="form-group">
+                            <label>
+                                <span>Firm Code (Dropdown) <span style="color: #ef4444;">*</span></span>
+                                <span class="label-hint">Select Company Branch</span>
+                            </label>
+                            <select id="cr-firm" class="form-control" required onchange="onCrFirmChanged()">
+                                <option value="" disabled selected>-- Select Firm --</option>
+                            </select>
+                        </div>
+
+                        <!-- VCH_NO (Readonly auto-calculated) -->
+                        <div class="form-group">
+                            <label>
+                                <span>Voucher Number (VCH_NO)</span>
+                                <span class="label-hint">Auto Sequenced</span>
+                            </label>
+                            <input type="text" id="cr-vch-no" class="form-control" readonly placeholder="Auto generated (#)" style="font-weight: 700; color: #34d399; background: rgba(0, 0, 0, 0.3); cursor: not-allowed;">
+                        </div>
+
+                        <!-- VCH_DATE Date picker -->
+                        <div class="form-group">
+                            <label>
+                                <span>Voucher Date (VCH_DATE) <span style="color: #ef4444;">*</span></span>
+                                <span class="label-hint">Transaction Date</span>
+                            </label>
+                            <input type="date" id="cr-vch-date" class="form-control" required>
+                        </div>
+
+                        <!-- LEDGER NAME Dropdown -->
+                        <div class="form-group">
+                            <label>
+                                <span>Ledger Name (Credit Account) <span style="color: #ef4444;">*</span></span>
+                                <span class="label-hint">Giving Party / Account</span>
+                            </label>
+                            <select id="cr-ledger" class="form-control" required>
+                                <option value="" disabled selected>-- Select Ledger --</option>
+                            </select>
+                        </div>
+
+                        <!-- AMOUNT -->
+                        <div class="form-group">
+                            <label>
+                                <span>Amount (₹) <span style="color: #ef4444;">*</span></span>
+                                <span class="label-hint">Receipt Amount</span>
+                            </label>
+                            <input type="number" id="cr-amount" class="form-control" step="0.01" min="0.01" required placeholder="e.g. 20000.00" style="font-size: 1.05rem; font-weight: 600;" oninput="updateCrPreviewAmount()">
+                        </div>
+
+                        <!-- REMARKS -->
+                        <div class="form-group">
+                            <label>
+                                <span>Remarks (Narration)</span>
+                                <span class="label-hint">Max 50 characters</span>
+                            </label>
+                            <input type="text" id="cr-remarks" class="form-control" maxlength="50" placeholder="e.g. RECD CASH">
+                        </div>
+                    </div>
+
+                    <!-- Double Entry Accounting Preview -->
+                    <div class="cr-preview">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="badge-credit">CR Row 1 (CONTRA 0)</span>
+                            <span style="color:#fff;">Credit Party Ledger</span>
+                        </div>
+                        <span style="color:var(--text-dim);">⇄</span>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="badge-debit">CR Row 2 (CONTRA 1)</span>
+                            <span style="color:#fff;">Debit CASH Account</span>
+                        </div>
+                        <div style="font-weight: 600; color: #34d399;" id="cr-preview-amount">₹ 0.00</div>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 1rem;">
+                        <button type="button" class="btn-secondary" onclick="resetCrForm()">Reset</button>
+                        <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%);">
+                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                            <span>Post Cash Receipt</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- CASH RECEIPTS RECENT VOUCHERS TABLE -->
+            <div class="toolbar">
+                <div class="toolbar-left">
+                    <div class="search-box">
+                        <svg class="search-icon" viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input type="text" id="cr-search" placeholder="Search vouchers by ledger, remarks, firm..." oninput="filterTransactions()">
+                    </div>
+                    <select id="cr-filter-firm" class="form-control" style="max-width: 200px; padding: 7px 12px; font-size: 0.82rem;" onchange="filterTransactions()">
+                        <option value="">All Firms</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 100px;">Vch #</th>
+                                <th style="width: 110px;">Date</th>
+                                <th style="width: 120px;">Firm</th>
+                                <th>Party Ledger (Credit)</th>
+                                <th style="width: 140px;">Contra (Debit)</th>
+                                <th style="width: 140px;">Amount</th>
+                                <th>Remarks</th>
+                                <th style="width: 90px; text-align: right;">Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactions-tbody">
+                            <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Loading cash receipt vouchers...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- ═════════ FIRM MODAL ═════════ -->
@@ -1197,9 +1451,6 @@
             </div>
             <form onsubmit="saveLedger(event)">
                 <div class="modal-body">
-                    <div id="firm-ledger-notice" style="display:none; margin-bottom: 1.25rem; padding: 10px 14px; background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 8px; font-size: 0.8rem; color: #c7d2fe;">
-                        <svg style="display:inline-block; vertical-align:-2px; margin-right:4px;" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg><strong>Firm Account:</strong> Ledger Code and Ledger Name are managed by Firm Master and cannot be changed here. Group and Address lines can be edited below.
-                    </div>
                     <div class="form-grid-2">
                         <!-- Code & Name -->
                         <div class="form-group">
@@ -1288,6 +1539,7 @@
         let firms = [];
         let groups = [];
         let ledgers = [];
+        let transactions = [];
         let currentCategoryFilter = '';
         let editingFirmCode = null;
         let editingGrpCode = null;
@@ -1354,6 +1606,11 @@
             
             const content = document.getElementById(`tab-${tab}`);
             if (content) content.style.display = 'block';
+
+            if (tab === 'receipt') {
+                initCrDate();
+                onCrFirmChanged();
+            }
         }
 
         function openModal(id) {
@@ -1391,6 +1648,9 @@
                     ledgerGrpSelect.innerHTML = html;
                 }
             }
+
+            // 3. Cash Receipt Dropdowns (Firms & Party Ledgers)
+            populateCrDropdowns();
         }
 
         function escapeHtml(str) {
@@ -1405,27 +1665,37 @@
         /* ── FETCH ALL DATA FROM API ── */
         async function fetchAll() {
             try {
-                const [fRes, gRes, lRes] = await Promise.all([
+                const [fRes, gRes, lRes, tRes] = await Promise.all([
                     fetch('/api/firms/'),
                     fetch('/api/groups/'),
-                    fetch('/api/ledgers/')
+                    fetch('/api/ledgers/'),
+                    fetch('/api/transactions/?vch_type=CR')
                 ]);
                 const fData = await fRes.json();
                 const gData = await gRes.json();
                 const lData = await lRes.json();
+                const tData = await tRes.json();
 
                 firms = fData.results || fData || [];
                 groups = gData.results || gData || [];
                 ledgers = lData.results || lData || [];
+                transactions = tData.results || tData || [];
+
+                // Count unique vouchers (primary rows where contra=0)
+                const receiptCount = transactions.filter(t => Number(t.contra) === 0).length;
 
                 // Update counters
                 document.getElementById('stat-firms').innerText = firms.length;
                 document.getElementById('stat-groups').innerText = groups.length;
                 document.getElementById('stat-ledgers').innerText = ledgers.length;
+                const statReceipts = document.getElementById('stat-receipts');
+                if (statReceipts) statReceipts.innerText = receiptCount;
 
                 document.getElementById('badge-firm-count').innerText = firms.length;
                 document.getElementById('badge-group-count').innerText = groups.length;
                 document.getElementById('badge-ledger-count').innerText = ledgers.length;
+                const badgeReceipt = document.getElementById('badge-receipt-count');
+                if (badgeReceipt) badgeReceipt.innerText = receiptCount;
 
                 // Immediately populate all select dropdowns so they are ready
                 populateSelectOptions();
@@ -1434,6 +1704,7 @@
                 renderFirms();
                 renderGroups();
                 renderLedgers();
+                renderTransactions();
             } catch (err) {
                 console.error('Fetch error:', err);
                 showToast('Failed to load records from DRF API');
@@ -1725,8 +1996,6 @@
         function openAddLedgerModal() {
             editingLedgerCode = null;
             document.getElementById('ledger-modal-title-text').innerText = 'Add Ledger Master';
-            const notice = document.getElementById('firm-ledger-notice');
-            if (notice) notice.style.display = 'none';
 
             const codeInput = document.getElementById('modal-ledger-code');
             codeInput.value = '';
@@ -1753,13 +2022,7 @@
             if (!ledger) return;
             editingLedgerCode = code;
 
-            const isFirm = ledger.is_firm_ledger === true;
-            document.getElementById('ledger-modal-title-text').innerText = isFirm 
-                ? 'Edit Ledger Master (Firm Account)' 
-                : 'Edit Ledger Master';
-
-            const notice = document.getElementById('firm-ledger-notice');
-            if (notice) notice.style.display = isFirm ? 'block' : 'none';
+            document.getElementById('ledger-modal-title-text').innerText = 'Edit Ledger Master';
 
             // Ledger code is primary key, read-only when editing
             const codeInput = document.getElementById('modal-ledger-code');
@@ -1768,12 +2031,12 @@
             codeInput.style.opacity = '0.7';
             codeInput.style.cursor = 'not-allowed';
 
-            // Ledger name is locked for Firm ledgers, editable for regular ledgers
+            // Ledger name is always editable
             const nameInput = document.getElementById('modal-ledger-name');
             nameInput.value = ledger.LEDGERNAME;
-            nameInput.readOnly = isFirm;
-            nameInput.style.opacity = isFirm ? '0.7' : '1';
-            nameInput.style.cursor = isFirm ? 'not-allowed' : 'text';
+            nameInput.readOnly = false;
+            nameInput.style.opacity = '1';
+            nameInput.style.cursor = 'text';
 
             populateSelectOptions();
             const grpTarget = (ledger.Grpcode !== null && ledger.Grpcode !== undefined && ledger.Grpcode !== '') 
@@ -1839,7 +2102,7 @@
         async function deleteLedger(code) {
             const confirmed = await showConfirm({
                 title: 'Delete Ledger Master',
-                message: `Are you sure you want to delete Ledger "${code}"? This will also remove the corresponding firm account.`,
+                message: `Are you sure you want to delete Ledger "${code}"?`,
                 confirmText: 'Delete Ledger',
                 danger: true
             });
@@ -1859,8 +2122,290 @@
             }
         }
 
+        /* ═══════════════════════════════════════════════════════
+           CASH RECEIPT (CR) VOUCHER ENGINE & DOUBLE ENTRY LOGIC
+           ═══════════════════════════════════════════════════════ */
+
+        function initCrDate() {
+            const dateInput = document.getElementById('cr-vch-date');
+            if (dateInput && !dateInput.value) {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                dateInput.value = `${yyyy}-${mm}-${dd}`;
+            }
+        }
+
+        function populateCrDropdowns() {
+            // 1. Firm dropdown for entry form
+            const crFirm = document.getElementById('cr-firm');
+            if (crFirm) {
+                const currentVal = crFirm.value;
+                let html = '<option value="" disabled selected>-- Select Firm --</option>';
+                firms.forEach(f => {
+                    html += `<option value="${escapeHtml(f.FirmCode)}">${escapeHtml(f.FirmCode)} - ${escapeHtml(f.Firmname)}</option>`;
+                });
+                crFirm.innerHTML = html;
+                if (currentVal && firms.some(f => f.FirmCode === currentVal)) {
+                    crFirm.value = currentVal;
+                } else if (firms.length > 0 && !currentVal) {
+                    crFirm.value = firms[0].FirmCode;
+                    onCrFirmChanged();
+                }
+            }
+
+            // 2. Firm filter for history table
+            const crFilterFirm = document.getElementById('cr-filter-firm');
+            if (crFilterFirm) {
+                const currentFilter = crFilterFirm.value;
+                let html = '<option value="">All Firms</option>';
+                firms.forEach(f => {
+                    html += `<option value="${escapeHtml(f.FirmCode)}">${escapeHtml(f.FirmCode)} - ${escapeHtml(f.Firmname)}</option>`;
+                });
+                crFilterFirm.innerHTML = html;
+                if (currentFilter) crFilterFirm.value = currentFilter;
+            }
+
+            // 3. Ledger dropdown (party ledgers excluding CASH)
+            const crLedger = document.getElementById('cr-ledger');
+            if (crLedger) {
+                const currentVal = crLedger.value;
+                let html = '<option value="" disabled selected>-- Select Ledger --</option>';
+                ledgers
+                    .filter(l => (l.Ledgercode || '').toUpperCase() !== 'CASH')
+                    .forEach(l => {
+                        html += `<option value="${escapeHtml(l.Ledgercode)}">${escapeHtml(l.Ledgercode)} - ${escapeHtml(l.LEDGERNAME)}</option>`;
+                    });
+                crLedger.innerHTML = html;
+                if (currentVal && ledgers.some(l => l.Ledgercode === currentVal)) {
+                    crLedger.value = currentVal;
+                }
+            }
+        }
+
+        async function onCrFirmChanged() {
+            const firmSelect = document.getElementById('cr-firm');
+            const vchInput = document.getElementById('cr-vch-no');
+            if (!firmSelect || !vchInput) return;
+
+            const firmCode = firmSelect.value;
+            if (!firmCode) {
+                vchInput.value = '';
+                return;
+            }
+
+            vchInput.value = 'Calculating...';
+            try {
+                const res = await fetch(`/api/transactions/next-vch-no/?firm_code=${encodeURIComponent(firmCode)}&vch_type=CR`);
+                if (res.ok) {
+                    const data = await res.json();
+                    vchInput.value = data.next_vch_number;
+                } else {
+                    vchInput.value = '1';
+                }
+            } catch (err) {
+                console.error('Error fetching next voucher number:', err);
+                vchInput.value = '1';
+            }
+        }
+
+        function updateCrPreviewAmount() {
+            const amountInput = document.getElementById('cr-amount');
+            const preview = document.getElementById('cr-preview-amount');
+            if (!amountInput || !preview) return;
+
+            const val = parseFloat(amountInput.value);
+            if (isNaN(val) || val <= 0) {
+                preview.innerText = '₹ 0.00';
+            } else {
+                preview.innerText = `₹ ${val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            }
+        }
+
+        function resetCrForm() {
+            const form = document.getElementById('cr-form');
+            if (form) {
+                document.getElementById('cr-amount').value = '';
+                document.getElementById('cr-remarks').value = '';
+                document.getElementById('cr-ledger').value = '';
+                updateCrPreviewAmount();
+                initCrDate();
+                onCrFirmChanged();
+            }
+        }
+
+        async function saveCashReceipt(e) {
+            e.preventDefault();
+            const firmCode = document.getElementById('cr-firm').value;
+            const vchDate = document.getElementById('cr-vch-date').value;
+            const ledgerCode = document.getElementById('cr-ledger').value;
+            const amount = document.getElementById('cr-amount').value;
+            const remarks = document.getElementById('cr-remarks').value.trim();
+
+            if (!firmCode) {
+                showToast('Please select a firm.');
+                document.getElementById('cr-firm').focus();
+                return;
+            }
+            if (!vchDate) {
+                showToast('Please select a voucher date.');
+                document.getElementById('cr-vch-date').focus();
+                return;
+            }
+            if (!ledgerCode) {
+                showToast('Please select a party ledger.');
+                document.getElementById('cr-ledger').focus();
+                return;
+            }
+            if (!amount || parseFloat(amount) <= 0) {
+                showToast('Please enter a valid receipt amount greater than 0.');
+                document.getElementById('cr-amount').focus();
+                return;
+            }
+
+            const payload = {
+                firm_code: firmCode,
+                vch_date: vchDate,
+                ledger_code: ledgerCode,
+                amount: amount,
+                remarks: remarks
+            };
+
+            try {
+                const res = await fetch('/api/transactions/cash-receipt/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    showToast(data.message || 'Cash receipt posted successfully!');
+                    resetCrForm();
+                    fetchAll();
+                } else {
+                    const err = await res.json().catch(() => null);
+                    let errMsg = 'Failed to post cash receipt';
+                    if (err) {
+                        errMsg = Object.entries(err)
+                            .map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(' ') : v}`)
+                            .join(' | ');
+                    }
+                    showToast(errMsg);
+                }
+            } catch (err) {
+                console.error('Save cash receipt error:', err);
+                showToast('Network error while posting cash receipt');
+            }
+        }
+
+        function renderTransactions() {
+            const searchInput = document.getElementById('cr-search');
+            const filterFirmSelect = document.getElementById('cr-filter-firm');
+            const tbody = document.getElementById('transactions-tbody');
+            if (!tbody) return;
+
+            const query = (searchInput ? searchInput.value : '').trim().toLowerCase();
+            const filterFirm = filterFirmSelect ? filterFirmSelect.value : '';
+
+            // Group by voucher: primary entry is contra === 0 (Credit Party Ledger)
+            let primaryVouchers = transactions.filter(t => Number(t.contra) === 0);
+
+            if (filterFirm) {
+                primaryVouchers = primaryVouchers.filter(t => t.firm_code === filterFirm);
+            }
+
+            if (query) {
+                primaryVouchers = primaryVouchers.filter(t => 
+                    String(t.vch_number).includes(query) ||
+                    (t.firm_code || '').toLowerCase().includes(query) ||
+                    (t.firm_name || '').toLowerCase().includes(query) ||
+                    (t.ledger_code || '').toLowerCase().includes(query) ||
+                    (t.ledger_name || '').toLowerCase().includes(query) ||
+                    (t.remarks || '').toLowerCase().includes(query) ||
+                    String(t.amount).includes(query)
+                );
+            }
+
+            if (!primaryVouchers.length) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">
+                    ${query || filterFirm ? 'No matching vouchers found.' : 'No cash receipts recorded yet. Fill out the form above to post your first voucher.'}
+                </td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = primaryVouchers.map(v => {
+                const formattedAmount = Number(v.amount).toLocaleString('en-IN', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+
+                return `
+                    <tr>
+                        <td><span class="code-pill" style="color: #34d399; border-color: rgba(16, 185, 129, 0.3); font-weight: 700;">#${escapeHtml(v.vch_number)}</span></td>
+                        <td style="color: var(--text-muted); font-size: 0.82rem; white-space: nowrap;">${escapeHtml(v.vch_date)}</td>
+                        <td><span class="code-pill">${escapeHtml(v.firm_code)}</span> <span style="font-size:0.8rem; color:var(--text-dim);">${escapeHtml(v.firm_name || '')}</span></td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span class="badge-credit" style="font-size:0.68rem; padding: 2px 6px;">CR</span>
+                                <strong style="color: #fff;">${escapeHtml(v.ledger_name || v.ledger_code)}</strong>
+                                <span style="font-size:0.75rem; color:var(--text-dim);">(${escapeHtml(v.ledger_code)})</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span class="badge-debit" style="font-size:0.68rem; padding: 2px 6px;">DR</span>
+                                <span style="color: #c7d2fe; font-weight: 600;">${escapeHtml(v.ref_name || v.ref_code || 'CASH')}</span>
+                            </div>
+                        </td>
+                        <td><strong style="color: #34d399; font-size: 0.95rem;">₹ ${formattedAmount}</strong></td>
+                        <td style="color: var(--text-muted); font-size: 0.82rem; max-width: 200px;">${escapeHtml(v.remarks || '-')}</td>
+                        <td class="actions-cell">
+                            <button class="btn-action btn-delete" onclick="deleteVoucher('${escapeHtml(v.firm_code)}', '${escapeHtml(v.vch_type)}', ${v.vch_number})" title="Delete Voucher">
+                                ${ICONS.delete}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterTransactions() {
+            renderTransactions();
+        }
+
+        async function deleteVoucher(firmCode, vchType, vchNumber) {
+            const confirmed = await showConfirm({
+                title: 'Delete Cash Receipt Voucher',
+                message: `Are you sure you want to delete Voucher #${vchNumber} for Firm "${firmCode}"? Both debit and credit double-entry rows will be permanently deleted.`,
+                confirmText: 'Delete Voucher',
+                danger: true
+            });
+            if (!confirmed) return;
+
+            try {
+                const res = await fetch(`/api/transactions/${encodeURIComponent(firmCode)}/${encodeURIComponent(vchType)}/${vchNumber}/`, {
+                    method: 'DELETE'
+                });
+                if (res.ok) {
+                    showToast(`Voucher #${vchNumber} deleted`);
+                    fetchAll();
+                    onCrFirmChanged();
+                } else {
+                    const err = await res.json().catch(() => null);
+                    showToast(err && err.error ? err.error : 'Failed to delete voucher');
+                }
+            } catch (err) {
+                showToast('Error deleting voucher');
+            }
+        }
+
         // Initialize on load
-        document.addEventListener('DOMContentLoaded', fetchAll);
+        document.addEventListener('DOMContentLoaded', () => {
+            initCrDate();
+            fetchAll();
+        });
     </script>
 </body>
 </html>

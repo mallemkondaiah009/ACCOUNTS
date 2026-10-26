@@ -1,6 +1,15 @@
 import re
+from decimal import Decimal
 from rest_framework import serializers
-from .models import FirmMaster, GroupMaster, LedgerMaster, GroupCategory
+from .models import (
+    FirmMaster,
+    GroupMaster,
+    LedgerMaster,
+    GroupCategory,
+    Transaction,
+    VoucherType,
+    TransactionType
+)
 
 
 def validate_alphanumeric(value, field_name):
@@ -88,14 +97,6 @@ class LedgerMasterSerializer(serializers.ModelSerializer):
     )
     group_name = serializers.CharField(source='group.grp_name', read_only=True, allow_null=True)
     group_category = serializers.CharField(source='group.category', read_only=True, allow_null=True)
-    FirmCode = serializers.PrimaryKeyRelatedField(
-        source='firm',
-        queryset=FirmMaster.objects.all(),
-        required=False,
-        allow_null=True
-    )
-    firm_name = serializers.CharField(source='firm.firm_name', read_only=True)
-    is_firm_ledger = serializers.BooleanField(read_only=True)
     Add1 = serializers.CharField(source='add1', max_length=50, required=False, allow_blank=True)
     Add2 = serializers.CharField(source='add2', max_length=50, required=False, allow_blank=True)
     Add3 = serializers.CharField(source='add3', max_length=50, required=False, allow_blank=True)
@@ -108,16 +109,13 @@ class LedgerMasterSerializer(serializers.ModelSerializer):
             'Grpcode',
             'group_name',
             'group_category',
-            'FirmCode',
-            'firm_name',
-            'is_firm_ledger',
             'Add1',
             'Add2',
             'Add3',
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['is_firm_ledger', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
 
     def validate_Ledgercode(self, value):
         validate_alphanumeric(value, 'Ledgercode')
@@ -127,13 +125,64 @@ class LedgerMasterSerializer(serializers.ModelSerializer):
         validate_alphanumeric(value, 'LEDGERNAME')
         return value.strip()
 
-    def validate(self, attrs):
-        instance = getattr(self, 'instance', None)
-        if instance and instance.is_firm_ledger:
-            new_name = attrs.get('ledger_name')
-            if new_name and new_name.strip() != instance.ledger_name:
-                raise serializers.ValidationError({
-                    'LEDGERNAME': 'Ledger name for a Firm ledger is managed by Firm Master and cannot be edited in Ledger Master.'
-                })
-        return attrs
+
+class TransactionSerializer(serializers.ModelSerializer):
+    firm_code = serializers.CharField(source='firm.firm_code', read_only=True)
+    firm_name = serializers.CharField(source='firm.firm_name', read_only=True)
+    ledger_name = serializers.SerializerMethodField()
+    ref_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Transaction
+        fields = [
+            'id',
+            'firm_code',
+            'firm_name',
+            'vch_type',
+            'vch_number',
+            'vch_date',
+            'ledger_code',
+            'ledger_name',
+            'ref_code',
+            'ref_name',
+            'remarks',
+            'chq_no',
+            'amount',
+            'type',
+            'contra',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def get_ledger_name(self, obj):
+        ledger = LedgerMaster.objects.filter(ledger_code=obj.ledger_code).first()
+        return ledger.ledger_name if ledger else obj.ledger_code
+
+    def get_ref_name(self, obj):
+        ledger = LedgerMaster.objects.filter(ledger_code=obj.ref_code).first()
+        return ledger.ledger_name if ledger else obj.ref_code
+
+
+class CashReceiptCreateSerializer(serializers.Serializer):
+    firm_code = serializers.CharField(max_length=5)
+    vch_date = serializers.DateField()
+    ledger_code = serializers.CharField(max_length=5)
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal('0.01'))
+    remarks = serializers.CharField(max_length=50, required=False, allow_blank=True, default='')
+
+    def validate_firm_code(self, value):
+        value = value.strip()
+        if not FirmMaster.objects.filter(firm_code=value).exists():
+            raise serializers.ValidationError("Selected Firm does not exist.")
+        return value
+
+    def validate_ledger_code(self, value):
+        value = value.strip()
+        if value.upper() == 'CASH':
+            raise serializers.ValidationError("Party ledger cannot be CASH for a Cash Receipt.")
+        if not LedgerMaster.objects.filter(ledger_code=value).exists():
+            raise serializers.ValidationError(f"Ledger '{value}' does not exist.")
+        return value
+
 

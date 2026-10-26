@@ -7,6 +7,10 @@ from .views import (
     GroupCategoriesAPIView,
     LedgerMasterListCreateAPIView,
     LedgerMasterDetailAPIView,
+    NextVoucherNumberAPIView,
+    CashReceiptCreateAPIView,
+    TransactionListAPIView,
+    VoucherDeleteAPIView,
 )
 
 urlpatterns = [
@@ -22,4 +26,10 @@ urlpatterns = [
     # Ledger Master Endpoints
     path('ledgers/', LedgerMasterListCreateAPIView.as_view(), name='ledger-master-list'),
     path('ledgers/<str:pk>/', LedgerMasterDetailAPIView.as_view(), name='ledger-master-detail'),
+
+    # Transaction Endpoints
+    path('transactions/', TransactionListAPIView.as_view(), name='transaction-list'),
+    path('transactions/cash-receipt/', CashReceiptCreateAPIView.as_view(), name='cash-receipt-create'),
+    path('transactions/next-vch-no/', NextVoucherNumberAPIView.as_view(), name='transaction-next-vch-no'),
+    path('transactions/<str:firm_code>/<str:vch_type>/<int:vch_number>/', VoucherDeleteAPIView.as_view(), name='voucher-delete'),
 ]
