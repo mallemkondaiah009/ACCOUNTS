@@ -20,7 +20,10 @@ from .serializers import (
     GroupMasterSerializer,
     LedgerMasterSerializer,
     TransactionSerializer,
-    CashReceiptCreateSerializer
+    CashReceiptCreateSerializer,
+    CashPaymentCreateSerializer,
+    BankPaymentCreateSerializer,
+    BankReceiptCreateSerializer
 )
 
 
@@ -392,6 +395,226 @@ class CashReceiptCreateAPIView(APIView):
 
         return Response({
             'message': f'Cash Receipt #{vch_number} posted successfully.',
+            'vch_number': vch_number,
+            'firm_code': firm_code,
+            'entries': TransactionSerializer([t1, t2], many=True).data
+        }, status=status.HTTP_201_CREATED)
+
+
+class CashPaymentCreateAPIView(APIView):
+    """
+    APIView to post Cash Payment (CP) implementing double-entry:
+    - Row 1: CONTRA=0, type='D' (Debit) for the selected Ledger (Supplier / Party / Expense)
+    - Row 2: CONTRA=1, type='C' (Credit) for CASH ledger (Cash going out)
+    POST /api/transactions/cash-payment/
+    """
+    def post(self, request):
+        serializer = CashPaymentCreateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        data = serializer.validated_data
+        firm_code = data['firm_code']
+        vch_date = data['vch_date']
+        ledger_code = data['ledger_code']
+        amount = data['amount']
+        remarks = data.get('remarks', '').strip()
+
+        with transaction.atomic():
+            firm = FirmMaster.objects.select_for_update().get(firm_code=firm_code)
+
+            # Ensure CASH ledger exists
+            cash_ledger = LedgerMaster.objects.filter(ledger_code='CASH').first()
+            if not cash_ledger:
+                cash_group = GroupMaster.objects.filter(category=GroupCategory.ASSETS).first()
+                if not cash_group:
+                    cash_group = GroupMaster.objects.create(
+                        grp_name='Cash in Hand',
+                        category=GroupCategory.ASSETS
+                    )
+                LedgerMaster.objects.create(
+                    ledger_code='CASH',
+                    ledger_name='Cash Account',
+                    group=cash_group
+                )
+
+            # Auto calculate next voucher number for CP
+            max_num = Transaction.objects.filter(
+                firm=firm,
+                vch_type=VoucherType.CASH_PAYMENT
+            ).aggregate(Max('vch_number'))['vch_number__max'] or 0
+            vch_number = max_num + 1
+
+            # 1. Primary Line (CONTRA = 0, Debit 'D') - Party / Expense receiving money
+            t1 = Transaction.objects.create(
+                firm=firm,
+                vch_type=VoucherType.CASH_PAYMENT,
+                vch_number=vch_number,
+                vch_date=vch_date,
+                ledger_code=ledger_code,
+                ref_code='CASH',
+                remarks=remarks,
+                chq_no=None,
+                amount=amount,
+                type=TransactionType.DEBIT,
+                contra=0
+            )
+
+            # 2. Contra Balancing Line (CONTRA = 1, Credit 'C') - Cash account decreasing
+            t2 = Transaction.objects.create(
+                firm=firm,
+                vch_type=VoucherType.CASH_PAYMENT,
+                vch_number=vch_number,
+                vch_date=vch_date,
+                ledger_code='CASH',
+                ref_code=ledger_code,
+                remarks=remarks,
+                chq_no=None,
+                amount=amount,
+                type=TransactionType.CREDIT,
+                contra=1
+            )
+
+        return Response({
+            'message': f'Cash Payment #{vch_number} posted successfully.',
+            'vch_number': vch_number,
+            'firm_code': firm_code,
+            'entries': TransactionSerializer([t1, t2], many=True).data
+        }, status=status.HTTP_201_CREATED)
+
+
+class BankPaymentCreateAPIView(APIView):
+    """
+    APIView to post Bank Payment (BP) implementing double-entry:
+    - Row 1: CONTRA=0, type='D' (Debit) for the selected Ledger (Supplier / Party / Expense), ref_code = bank_ledger_code
+    - Row 2: CONTRA=1, type='C' (Credit) for the selected Bank Ledger (Money leaving bank), ref_code = ledger_code
+    POST /api/transactions/bank-payment/
+    """
+    def post(self, request):
+        serializer = BankPaymentCreateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        data = serializer.validated_data
+        firm_code = data['firm_code']
+        vch_date = data['vch_date']
+        bank_ledger_code = data['bank_ledger_code']
+        ledger_code = data['ledger_code']
+        chq_no = data.get('chq_no', '').strip() or None
+        amount = data['amount']
+        remarks = data.get('remarks', '').strip()
+
+        with transaction.atomic():
+            firm = FirmMaster.objects.select_for_update().get(firm_code=firm_code)
+
+            # Auto calculate next voucher number for BP
+            max_num = Transaction.objects.filter(
+                firm=firm,
+                vch_type=VoucherType.BANK_PAYMENT
+            ).aggregate(Max('vch_number'))['vch_number__max'] or 0
+            vch_number = max_num + 1
+
+            # 1. Primary Line (CONTRA = 0, Debit 'D') - Party / Expense receiving money
+            t1 = Transaction.objects.create(
+                firm=firm,
+                vch_type=VoucherType.BANK_PAYMENT,
+                vch_number=vch_number,
+                vch_date=vch_date,
+                ledger_code=ledger_code,
+                ref_code=bank_ledger_code,
+                remarks=remarks,
+                chq_no=chq_no,
+                amount=amount,
+                type=TransactionType.DEBIT,
+                contra=0
+            )
+
+            # 2. Contra Balancing Line (CONTRA = 1, Credit 'C') - Bank account decreasing
+            t2 = Transaction.objects.create(
+                firm=firm,
+                vch_type=VoucherType.BANK_PAYMENT,
+                vch_number=vch_number,
+                vch_date=vch_date,
+                ledger_code=bank_ledger_code,
+                ref_code=ledger_code,
+                remarks=remarks,
+                chq_no=chq_no,
+                amount=amount,
+                type=TransactionType.CREDIT,
+                contra=1
+            )
+
+        return Response({
+            'message': f'Bank Payment #{vch_number} posted successfully.',
+            'vch_number': vch_number,
+            'firm_code': firm_code,
+            'entries': TransactionSerializer([t1, t2], many=True).data
+        }, status=status.HTTP_201_CREATED)
+
+
+class BankReceiptCreateAPIView(APIView):
+    """
+    APIView to post Bank Receipt (BR) implementing double-entry:
+    - Row 1: CONTRA=0, type='C' (Credit) for the selected Ledger (Customer / Party / Income), ref_code = bank_ledger_code
+    - Row 2: CONTRA=1, type='D' (Debit) for the selected Bank Ledger (Money entering bank), ref_code = ledger_code
+    POST /api/transactions/bank-receipt/
+    """
+    def post(self, request):
+        serializer = BankReceiptCreateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        data = serializer.validated_data
+        firm_code = data['firm_code']
+        vch_date = data['vch_date']
+        bank_ledger_code = data['bank_ledger_code']
+        ledger_code = data['ledger_code']
+        chq_no = data.get('chq_no', '').strip() or None
+        amount = data['amount']
+        remarks = data.get('remarks', '').strip()
+
+        with transaction.atomic():
+            firm = FirmMaster.objects.select_for_update().get(firm_code=firm_code)
+
+            # Auto calculate next voucher number for BR
+            max_num = Transaction.objects.filter(
+                firm=firm,
+                vch_type=VoucherType.BANK_RECEIPT
+            ).aggregate(Max('vch_number'))['vch_number__max'] or 0
+            vch_number = max_num + 1
+
+            # 1. Primary Line (CONTRA = 0, Credit 'C') - Customer / Party / Income giving money
+            t1 = Transaction.objects.create(
+                firm=firm,
+                vch_type=VoucherType.BANK_RECEIPT,
+                vch_number=vch_number,
+                vch_date=vch_date,
+                ledger_code=ledger_code,
+                ref_code=bank_ledger_code,
+                remarks=remarks,
+                chq_no=chq_no,
+                amount=amount,
+                type=TransactionType.CREDIT,
+                contra=0
+            )
+
+            # 2. Contra Balancing Line (CONTRA = 1, Debit 'D') - Bank account increasing
+            t2 = Transaction.objects.create(
+                firm=firm,
+                vch_type=VoucherType.BANK_RECEIPT,
+                vch_number=vch_number,
+                vch_date=vch_date,
+                ledger_code=bank_ledger_code,
+                ref_code=ledger_code,
+                remarks=remarks,
+                chq_no=chq_no,
+                amount=amount,
+                type=TransactionType.DEBIT,
+                contra=1
+            )
+
+        return Response({
+            'message': f'Bank Receipt #{vch_number} posted successfully.',
             'vch_number': vch_number,
             'firm_code': firm_code,
             'entries': TransactionSerializer([t1, t2], many=True).data

@@ -36,8 +36,14 @@ class FirmMasterSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at']
 
     def validate_FirmCode(self, value):
-        validate_alphanumeric(value, 'FirmCode')
-        return value.strip()
+        value = validate_alphanumeric(value, 'FirmCode').strip()
+        instance = getattr(self, 'instance', None)
+        qs = FirmMaster.objects.filter(firm_code=value)
+        if instance:
+            qs = qs.exclude(firm_code=instance.firm_code)
+        if qs.exists():
+            raise serializers.ValidationError(f"Firm with code '{value}' already exists. Please use a different code.")
+        return value
 
     def validate_Firmname(self, value):
         validate_alphanumeric(value, 'Firmname')
@@ -118,8 +124,14 @@ class LedgerMasterSerializer(serializers.ModelSerializer):
         read_only_fields = ['created_at', 'updated_at']
 
     def validate_Ledgercode(self, value):
-        validate_alphanumeric(value, 'Ledgercode')
-        return value.strip()
+        value = validate_alphanumeric(value, 'Ledgercode').strip()
+        instance = getattr(self, 'instance', None)
+        qs = LedgerMaster.objects.filter(ledger_code=value)
+        if instance:
+            qs = qs.exclude(ledger_code=instance.ledger_code)
+        if qs.exists():
+            raise serializers.ValidationError(f"Ledger with code '{value}' already exists. Please use a different code.")
+        return value
 
     def validate_LEDGERNAME(self, value):
         validate_alphanumeric(value, 'LEDGERNAME')
@@ -184,5 +196,104 @@ class CashReceiptCreateSerializer(serializers.Serializer):
         if not LedgerMaster.objects.filter(ledger_code=value).exists():
             raise serializers.ValidationError(f"Ledger '{value}' does not exist.")
         return value
+
+
+class CashPaymentCreateSerializer(serializers.Serializer):
+    firm_code = serializers.CharField(max_length=5)
+    vch_date = serializers.DateField()
+    ledger_code = serializers.CharField(max_length=5)
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal('0.01'))
+    remarks = serializers.CharField(max_length=50, required=False, allow_blank=True, default='')
+
+    def validate_firm_code(self, value):
+        value = value.strip()
+        if not FirmMaster.objects.filter(firm_code=value).exists():
+            raise serializers.ValidationError("Selected Firm does not exist.")
+        return value
+
+    def validate_ledger_code(self, value):
+        value = value.strip()
+        if value.upper() == 'CASH':
+            raise serializers.ValidationError("Paid-to ledger cannot be CASH for a Cash Payment.")
+        if not LedgerMaster.objects.filter(ledger_code=value).exists():
+            raise serializers.ValidationError(f"Ledger '{value}' does not exist.")
+        return value
+
+
+class BankPaymentCreateSerializer(serializers.Serializer):
+    firm_code = serializers.CharField(max_length=5)
+    vch_date = serializers.DateField()
+    bank_ledger_code = serializers.CharField(max_length=5)
+    ledger_code = serializers.CharField(max_length=5)
+    chq_no = serializers.CharField(max_length=10, required=False, allow_blank=True, default='')
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal('0.01'))
+    remarks = serializers.CharField(max_length=50, required=False, allow_blank=True, default='')
+
+    def validate_firm_code(self, value):
+        value = value.strip()
+        if not FirmMaster.objects.filter(firm_code=value).exists():
+            raise serializers.ValidationError("Selected Firm does not exist.")
+        return value
+
+    def validate_bank_ledger_code(self, value):
+        value = value.strip()
+        if value.upper() == 'CASH':
+            raise serializers.ValidationError("Bank account ledger cannot be CASH. Use Cash Payment for cash vouchers.")
+        if not LedgerMaster.objects.filter(ledger_code=value).exists():
+            raise serializers.ValidationError(f"Bank ledger '{value}' does not exist.")
+        return value
+
+    def validate_ledger_code(self, value):
+        value = value.strip()
+        if not LedgerMaster.objects.filter(ledger_code=value).exists():
+            raise serializers.ValidationError(f"Paid-to ledger '{value}' does not exist.")
+        return value
+
+    def validate(self, attrs):
+        bank_ledger = attrs.get('bank_ledger_code', '').strip()
+        paid_to_ledger = attrs.get('ledger_code', '').strip()
+        if bank_ledger.upper() == paid_to_ledger.upper():
+            raise serializers.ValidationError("Bank ledger and Paid-To ledger cannot be the same account.")
+        return attrs
+
+
+class BankReceiptCreateSerializer(serializers.Serializer):
+    firm_code = serializers.CharField(max_length=5)
+    vch_date = serializers.DateField()
+    bank_ledger_code = serializers.CharField(max_length=5)
+    ledger_code = serializers.CharField(max_length=5)
+    chq_no = serializers.CharField(max_length=10, required=False, allow_blank=True, default='')
+    amount = serializers.DecimalField(max_digits=12, decimal_places=2, min_value=Decimal('0.01'))
+    remarks = serializers.CharField(max_length=50, required=False, allow_blank=True, default='')
+
+    def validate_firm_code(self, value):
+        value = value.strip()
+        if not FirmMaster.objects.filter(firm_code=value).exists():
+            raise serializers.ValidationError("Selected Firm does not exist.")
+        return value
+
+    def validate_bank_ledger_code(self, value):
+        value = value.strip()
+        if value.upper() == 'CASH':
+            raise serializers.ValidationError("Bank account ledger cannot be CASH. Use Cash Receipt for cash vouchers.")
+        if not LedgerMaster.objects.filter(ledger_code=value).exists():
+            raise serializers.ValidationError(f"Bank ledger '{value}' does not exist.")
+        return value
+
+    def validate_ledger_code(self, value):
+        value = value.strip()
+        if not LedgerMaster.objects.filter(ledger_code=value).exists():
+            raise serializers.ValidationError(f"Received-from ledger '{value}' does not exist.")
+        return value
+
+    def validate(self, attrs):
+        bank_ledger = attrs.get('bank_ledger_code', '').strip()
+        received_from_ledger = attrs.get('ledger_code', '').strip()
+        if bank_ledger.upper() == received_from_ledger.upper():
+            raise serializers.ValidationError("Bank ledger and Received-From ledger cannot be the same account.")
+        return attrs
+
+
+
 
 
