@@ -79,8 +79,12 @@ class LedgerMasterSerializer(serializers.ModelSerializer):
     Grpcode = serializers.PrimaryKeyRelatedField(
         source='group',
         queryset=GroupMaster.objects.all(),
-        required=False,
-        allow_null=True
+        required=True,
+        allow_null=False,
+        error_messages={
+            'null': 'Group is required. Please select a group.',
+            'required': 'Group is required. Please select a group.'
+        }
     )
     group_name = serializers.CharField(source='group.grp_name', read_only=True, allow_null=True)
     group_category = serializers.CharField(source='group.category', read_only=True, allow_null=True)
