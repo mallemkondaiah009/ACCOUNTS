@@ -253,7 +253,7 @@ class BankPaymentCreateSerializer(serializers.Serializer):
         bank_ledger = attrs.get('bank_ledger_code', '').strip()
         paid_to_ledger = attrs.get('ledger_code', '').strip()
         if bank_ledger.upper() == paid_to_ledger.upper():
-            raise serializers.ValidationError("Bank ledger and Paid-To ledger cannot be the same account.")
+            raise serializers.ValidationError("Same bank account cannot be selected twice.")
         return attrs
 
 
@@ -290,7 +290,7 @@ class BankReceiptCreateSerializer(serializers.Serializer):
         bank_ledger = attrs.get('bank_ledger_code', '').strip()
         received_from_ledger = attrs.get('ledger_code', '').strip()
         if bank_ledger.upper() == received_from_ledger.upper():
-            raise serializers.ValidationError("Bank ledger and Received-From ledger cannot be the same account.")
+            raise serializers.ValidationError("Same bank account cannot be selected twice.")
         return attrs
 
 

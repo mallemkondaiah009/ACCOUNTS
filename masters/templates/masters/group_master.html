@@ -1075,8 +1075,8 @@
                     <td>${getCategoryBadge(g.category)}</td>
                     <td>${g.Super ? `<span class="code-pill">${g.Super}</span> <span style="font-size:0.84rem; color:var(--text-muted);">${escapeHtml(g.super_name || '')}</span>` : '<span style="color:var(--text-dim);">-</span>'}</td>
                     <td class="actions-cell">
-                        <button class="btn-action btn-edit" onclick="editGroup(${g.GrpCode})">${ICONS.edit}<span>Edit</span></button>
-                        <button class="btn-action btn-delete" onclick="deleteGroup(${g.GrpCode})">${ICONS.delete}<span>Delete</span></button>
+                        <button class="btn-action btn-edit" onclick="editGroup(${g.GrpCode})" title="Edit Group">${ICONS.edit}</button>
+                        <button class="btn-action btn-delete" onclick="deleteGroup(${g.GrpCode})" title="Delete Group">${ICONS.delete}</button>
                     </td>
                 </tr>
             `).join('');

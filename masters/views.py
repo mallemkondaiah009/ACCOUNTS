@@ -768,8 +768,11 @@ class VoucherDetailAPIView(APIView):
 
         if not ledger_code:
             return Response({'error': 'Party ledger is required.'}, status=status.HTTP_400_BAD_REQUEST)
-        if vch_type_upper in ('BP', 'BR') and not bank_ledger_code:
-            return Response({'error': 'Bank ledger is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if vch_type_upper in ('BP', 'BR'):
+            if not bank_ledger_code:
+                return Response({'error': 'Bank ledger is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            if bank_ledger_code.strip().upper() == ledger_code.strip().upper():
+                return Response({'error': 'Same bank account cannot be selected twice.'}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
             rows = Transaction.objects.select_for_update().filter(

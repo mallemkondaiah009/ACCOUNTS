@@ -341,6 +341,49 @@
             text-align: right;
         }
 
+        /* ── MODAL PREVIEW BOX ── */
+        .modal-preview-box {
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            padding: 10px 14px;
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .modal-preview-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .modal-preview-entries {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .modal-preview-amount-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 8px;
+            margin-top: 4px;
+            gap: 12px;
+        }
+
+        .modal-preview-amount-val {
+            font-size: 1.25rem;
+            font-weight: 800;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: right;
+            word-break: break-all;
+        }
+
         .preview-title {
             font-size: 0.78rem;
             font-weight: 700;
@@ -424,18 +467,26 @@
                 padding: 12px 14px;
             }
 
+            .preview-entries-wrap {
+                width: 100%;
+            }
+
             .preview-entries {
                 flex-direction: column;
                 gap: 8px;
+                width: 100%;
             }
 
             .preview-amount-wrap {
                 display: flex;
                 justify-content: space-between;
-                align-items: center;
+                align-items: baseline;
+                width: 100% !important;
+                margin-left: 0 !important;
                 border-top: 1px dashed #cbd5e1;
                 padding-top: 10px;
                 text-align: left;
+                gap: 12px;
             }
 
             .form-actions {
@@ -858,17 +909,16 @@
                         </div>
                     </div>
                     <div class="preview-amount-wrap">
-                        <span style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted);">Total Amount</span>
-                        <div id="br-preview-amount" style="font-size: 1.25rem; font-weight: 800; color: #0d9488; font-family: 'JetBrains Mono', monospace;">₹ 0.00</div>
+                        <span style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); white-space: nowrap; flex-shrink: 0;">Total Amount</span>
+                        <div id="br-preview-amount" style="font-size: 1.25rem; font-weight: 800; color: #0d9488; font-family: 'JetBrains Mono', monospace; word-break: break-all; text-align: right;">₹ 0.00</div>
                     </div>
                 </div>
 
                 <div class="form-actions">
-                    <button type="button" id="br-cancel-edit-btn" class="btn-secondary" style="display:none; color:#dc2626; border-color:#fca5a5; background:#fff1f2;" onclick="cancelBrEdit()">Cancel Edit</button>
-                    <button type="button" class="btn-secondary" onclick="resetBrForm()">Reset</button>
-                    <button type="submit" class="btn-submit">
+                    <button type="button" class="btn-secondary" id="br-reset-btn" onclick="resetBrForm()">Reset</button>
+                    <button type="submit" class="btn-submit" id="br-submit-btn">
                         <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                        <span id="br-submit-text">Post Bank Receipt</span>
+                        <span id="br-submit-text">Save</span>
                     </button>
                 </div>
             </form>
@@ -900,7 +950,7 @@
                             <th style="width: 110px;">Chq / UTR</th>
                             <th style="width: 120px;">Amount</th>
                             <th>Remarks</th>
-                            <th style="width: 140px; text-align: right;">Action</th>
+                            <th style="width: 140px; text-align: right;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="br-transactions-tbody">
@@ -910,6 +960,87 @@
             </div>
         </div>
     </main>
+
+    <!-- EDIT BANK RECEIPT MODAL -->
+    <div id="editBrModal" class="modal-overlay">
+        <div class="modal" style="max-width: 620px; max-height: 92vh;">
+            <div class="modal-header">
+                <h3 class="modal-title" style="color: #0d9488;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    <span id="modal-br-title">Edit Bank Receipt</span>
+                </h3>
+                <button type="button" class="close-btn" onclick="closeEditBrModal()">&times;</button>
+            </div>
+            <form id="modal-br-form" onsubmit="submitEditBankReceipt(event)">
+                <div class="modal-body" style="padding: 1.15rem 1.4rem; overflow-y: auto; max-height: calc(92vh - 130px);">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0.75rem;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Firm</label>
+                            <input type="text" id="modal-br-firm-display" readonly style="background: #f1f5f9; color: #475569; font-weight: 700;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label>Voucher No</label>
+                            <input type="text" id="modal-br-vch-no" readonly style="background: #f1f5f9; color: #475569; font-weight: 700;">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label for="modal-br-vch-date">Voucher Date *</label>
+                        <input type="date" id="modal-br-vch-date" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label for="modal-br-bank-ledger">Deposited To Bank Account *</label>
+                        <select id="modal-br-bank-ledger" required onchange="updateModalBrPreview('bank')">
+                            <option value="" disabled selected>-- Select Bank Account --</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label for="modal-br-ledger">Received From Ledger *</label>
+                        <select id="modal-br-ledger" required onchange="updateModalBrPreview('party')">
+                            <option value="" disabled selected>-- Select Received From Ledger --</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label for="modal-br-chq-no">Cheque / UTR / Reference No</label>
+                        <input type="text" id="modal-br-chq-no" maxlength="20">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0.75rem;">
+                        <label for="modal-br-amount">Receipt Amount (₹) *</label>
+                        <input type="number" id="modal-br-amount" step="0.01" min="0.01" required placeholder="0.00" oninput="updateModalBrPreview()">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="modal-br-remarks">Remarks</label>
+                        <input type="text" id="modal-br-remarks" maxlength="40">
+                    </div>
+
+                    <!-- PREVIEW BOX -->
+                    <div class="modal-preview-box">
+                        <div class="modal-preview-title">Double-Entry Preview</div>
+                        <div class="modal-preview-entries">
+                            <div class="entry-line">
+                                <span class="badge-debit">DR</span>
+                                <span id="modal-br-preview-bank" style="color: #dc2626; font-weight: 700;">Selected Bank Account</span>
+                            </div>
+                            <div class="entry-line">
+                                <span class="badge-credit">CR</span>
+                                <span id="modal-br-preview-party" style="color: #16a34a; font-weight: 700;">Selected Customer / Payer</span>
+                            </div>
+                        </div>
+                        <div class="modal-preview-amount-row">
+                            <span style="font-size: 0.74rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); letter-spacing: 0.05em;">Total Amount</span>
+                            <div id="modal-br-preview-amount" class="modal-preview-amount-val" style="color: #0d9488;">₹ 0.00</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer" style="padding: 0.85rem 1.4rem; border-top: 1px solid var(--border-color); background: #f8fafc; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btn-secondary" onclick="closeEditBrModal()">Cancel</button>
+                    <button type="submit" class="btn-submit" style="padding: 10px 20px;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        <span>Update</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- CONFIRM DIALOG MODAL -->
     <div id="confirmModal" class="modal-overlay">
@@ -1073,10 +1204,10 @@
                     html += `<option value="${escapeHtml(f.FirmCode)}">${escapeHtml(f.FirmCode)} - ${escapeHtml(f.Firmname)}</option>`;
                 });
                 firmSelect.innerHTML = html;
-                if (cur && firms.some(f => f.FirmCode === cur)) firmSelect.value = cur;
-                else if (firms.length > 0) {
-                    firmSelect.value = firms[0].FirmCode;
-                    onBrFirmChanged();
+                if (cur && firms.some(f => f.FirmCode === cur)) {
+                    firmSelect.value = cur;
+                } else {
+                    firmSelect.value = '';
                 }
             }
 
@@ -1121,7 +1252,11 @@
         async function onBrFirmChanged() {
             const firmCode = document.getElementById('br-firm').value;
             const vchInput = document.getElementById('br-vch-no');
-            if (!firmCode || !vchInput) return;
+            if (!vchInput) return;
+            if (!firmCode) {
+                vchInput.value = '';
+                return;
+            }
 
             vchInput.value = 'Calculating...';
             try {
@@ -1138,13 +1273,29 @@
         }
 
         function updateBrPreviewBank() {
-            const code = document.getElementById('br-bank-ledger').value;
+            const bankSelect = document.getElementById('br-bank-ledger');
+            const partySelect = document.getElementById('br-ledger');
+            if (bankSelect && partySelect && bankSelect.value && partySelect.value) {
+                if (bankSelect.value.trim().toUpperCase() === partySelect.value.trim().toUpperCase()) {
+                    showToast('Same bank account cannot be selected twice.');
+                    bankSelect.value = '';
+                }
+            }
+            const code = bankSelect ? bankSelect.value : '';
             const l = ledgers.find(item => item.Ledgercode === code);
             document.getElementById('br-preview-bank').innerText = l ? `${l.LEDGERNAME} (${l.Ledgercode})` : 'Selected Bank Account';
         }
 
         function updateBrPreviewParty() {
-            const code = document.getElementById('br-ledger').value;
+            const bankSelect = document.getElementById('br-bank-ledger');
+            const partySelect = document.getElementById('br-ledger');
+            if (bankSelect && partySelect && bankSelect.value && partySelect.value) {
+                if (bankSelect.value.trim().toUpperCase() === partySelect.value.trim().toUpperCase()) {
+                    showToast('Same bank account cannot be selected twice.');
+                    partySelect.value = '';
+                }
+            }
+            const code = partySelect ? partySelect.value : '';
             const l = ledgers.find(item => item.Ledgercode === code);
             document.getElementById('br-preview-party').innerText = l ? `${l.LEDGERNAME} (${l.Ledgercode})` : 'Selected Customer / Payer';
         }
@@ -1157,17 +1308,8 @@
         }
 
         function resetBrForm() {
-            editingVoucherNumber = null;
-            editingFirmCode = null;
-            const firmSelect = document.getElementById('br-firm');
-            if (firmSelect) firmSelect.disabled = false;
-            const cancelBtn = document.getElementById('br-cancel-edit-btn');
-            if (cancelBtn) cancelBtn.style.display = 'none';
-            const submitText = document.getElementById('br-submit-text');
-            if (submitText) submitText.innerText = 'Post Bank Receipt';
-            const banner = document.getElementById('br-edit-banner');
-            if (banner) banner.remove();
-
+            document.getElementById('br-firm').value = '';
+            document.getElementById('br-vch-no').value = '';
             document.getElementById('br-bank-ledger').value = '';
             document.getElementById('br-ledger').value = '';
             document.getElementById('br-chq-no').value = '';
@@ -1177,12 +1319,40 @@
             updateBrPreviewParty();
             updateBrPreviewAmount();
             initBrDate();
-            onBrFirmChanged();
         }
 
-        function cancelBrEdit() {
-            resetBrForm();
-            showToast('Editing cancelled.');
+        function closeEditBrModal() {
+            const modal = document.getElementById('editBrModal');
+            if (modal) modal.classList.remove('active');
+            editingVoucherNumber = null;
+            editingFirmCode = null;
+        }
+
+        function updateModalBrPreview(changedField) {
+            const bankSelect = document.getElementById('modal-br-bank-ledger');
+            const partySelect = document.getElementById('modal-br-ledger');
+            if (bankSelect && partySelect && bankSelect.value && partySelect.value) {
+                if (bankSelect.value.trim().toUpperCase() === partySelect.value.trim().toUpperCase()) {
+                    showToast('Same bank account cannot be selected twice.');
+                    if (changedField === 'bank') {
+                        bankSelect.value = '';
+                    } else {
+                        partySelect.value = '';
+                    }
+                }
+            }
+            const bankCode = bankSelect ? bankSelect.value : '';
+            const b = ledgers.find(item => item.Ledgercode === bankCode);
+            document.getElementById('modal-br-preview-bank').innerText = b ? `${b.LEDGERNAME} (${b.Ledgercode})` : 'Selected Bank Account';
+
+            const partyCode = partySelect ? partySelect.value : '';
+            const p = ledgers.find(item => item.Ledgercode === partyCode);
+            document.getElementById('modal-br-preview-party').innerText = p ? `${p.LEDGERNAME} (${p.Ledgercode})` : 'Selected Customer / Payer';
+
+            const val = parseFloat(document.getElementById('modal-br-amount').value);
+            const pAmt = document.getElementById('modal-br-preview-amount');
+            if (isNaN(val) || val <= 0) pAmt.innerText = '₹ 0.00';
+            else pAmt.innerText = `₹ ${val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         }
 
         async function editVoucher(firmCode, vchType, vchNumber) {
@@ -1190,59 +1360,97 @@
                 const res = await fetch(`/api/transactions/${encodeURIComponent(firmCode)}/${encodeURIComponent(vchType)}/${vchNumber}/`);
                 if (!res.ok) {
                     const err = await res.json().catch(() => null);
-                    showToast(err && err.error ? err.error : 'Failed to fetch voucher details for editing');
+                    showToast(err && err.error ? err.error : 'Failed to fetch voucher for editing');
                     return;
                 }
                 const v = await res.json();
                 editingVoucherNumber = v.vch_number;
                 editingFirmCode = v.firm_code;
 
-                const firmSelect = document.getElementById('br-firm');
-                if (firmSelect) {
-                    firmSelect.value = v.firm_code;
-                    firmSelect.disabled = true;
-                }
-                const vchInput = document.getElementById('br-vch-no');
-                if (vchInput) vchInput.value = v.vch_number;
-                const vchDate = document.getElementById('br-vch-date');
-                if (vchDate) vchDate.value = v.vch_date;
+                const firmObj = firms.find(f => f.FirmCode === v.firm_code);
+                const firmLabel = firmObj ? `${v.firm_code} - ${firmObj.Firmname}` : v.firm_code;
+                document.getElementById('modal-br-firm-display').value = firmLabel;
+                document.getElementById('modal-br-vch-no').value = `#${v.vch_number}`;
+                document.getElementById('modal-br-title').innerText = `Edit Bank Receipt #${v.vch_number}`;
+                document.getElementById('modal-br-vch-date').value = v.vch_date;
 
-                const bankLedgerSelect = document.getElementById('br-bank-ledger');
-                if (bankLedgerSelect) bankLedgerSelect.value = v.ref_code;
-                const ledgerSelect = document.getElementById('br-ledger');
-                if (ledgerSelect) ledgerSelect.value = v.ledger_code;
+                const modalLedgerSelect = document.getElementById('modal-br-ledger');
+                let ledgerHtml = '<option value="" disabled selected>-- Select Received From Ledger --</option>';
+                ledgers.forEach(l => {
+                    ledgerHtml += `<option value="${escapeHtml(l.Ledgercode)}">${escapeHtml(l.Ledgercode)} - ${escapeHtml(l.LEDGERNAME)}</option>`;
+                });
+                modalLedgerSelect.innerHTML = ledgerHtml;
+                modalLedgerSelect.value = v.ledger_code;
 
-                const chqInput = document.getElementById('br-chq-no');
-                if (chqInput) chqInput.value = v.chq_no || '';
-                const amountInput = document.getElementById('br-amount');
-                if (amountInput) amountInput.value = v.amount;
-                const remarksInput = document.getElementById('br-remarks');
-                if (remarksInput) remarksInput.value = v.remarks || '';
+                const modalBankSelect = document.getElementById('modal-br-bank-ledger');
+                let bankHtml = '<option value="" disabled selected>-- Select Bank Account --</option>';
+                const bankAccounts = ledgers.filter(isBankLedger);
+                bankAccounts.forEach(l => {
+                    bankHtml += `<option value="${escapeHtml(l.Ledgercode)}">${escapeHtml(l.Ledgercode)} - ${escapeHtml(l.LEDGERNAME)}</option>`;
+                });
+                modalBankSelect.innerHTML = bankHtml;
+                modalBankSelect.value = v.ref_code;
 
-                updateBrPreviewBank();
-                updateBrPreviewParty();
-                updateBrPreviewAmount();
+                document.getElementById('modal-br-chq-no').value = v.chq_no || '';
+                document.getElementById('modal-br-amount').value = v.amount;
+                document.getElementById('modal-br-remarks').value = v.remarks || '';
 
-                const cancelBtn = document.getElementById('br-cancel-edit-btn');
-                if (cancelBtn) cancelBtn.style.display = 'inline-flex';
-                const submitText = document.getElementById('br-submit-text');
-                if (submitText) submitText.innerText = `Update Bank Receipt #${v.vch_number}`;
-
-                let banner = document.getElementById('br-edit-banner');
-                if (!banner) {
-                    banner = document.createElement('div');
-                    banner.id = 'br-edit-banner';
-                    banner.style.cssText = 'background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 0.6rem 0.9rem; font-size: 0.85rem; font-weight: 600; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;';
-                    const form = document.getElementById('bank-receipt-form');
-                    form.parentNode.insertBefore(banner, form);
-                }
-                banner.innerHTML = `<span>Editing Voucher <strong>#${escapeHtml(v.vch_number)}</strong> for Firm <strong>${escapeHtml(v.firm_code)}</strong></span>
-                                    <button type="button" onclick="cancelBrEdit()" style="background:none; border:none; color:#1e40af; font-weight:700; cursor:pointer; text-decoration:underline;">Cancel</button>`;
-
-                document.getElementById('bank-receipt-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                showToast(`Loaded Voucher #${v.vch_number} for editing`);
+                updateModalBrPreview();
+                const modal = document.getElementById('editBrModal');
+                if (modal) modal.classList.add('active');
             } catch (err) {
+                console.error('Error loading voucher for edit:', err);
                 showToast('Error loading voucher for edit');
+            }
+        }
+
+        async function submitEditBankReceipt(e) {
+            e.preventDefault();
+            if (!editingVoucherNumber || !editingFirmCode) return;
+
+            const vchDate = document.getElementById('modal-br-vch-date').value;
+            const bankLedgerCode = document.getElementById('modal-br-bank-ledger').value;
+            const ledgerCode = document.getElementById('modal-br-ledger').value;
+            const chqNo = document.getElementById('modal-br-chq-no').value.trim();
+            const amount = document.getElementById('modal-br-amount').value;
+            const remarks = document.getElementById('modal-br-remarks').value.trim();
+
+            if (!vchDate) { showToast('Please select a voucher date.'); return; }
+            if (!bankLedgerCode) { showToast('Please select a bank account.'); return; }
+            if (!ledgerCode) { showToast('Please select a received from ledger.'); return; }
+            if (bankLedgerCode.toUpperCase() === ledgerCode.toUpperCase()) {
+                showToast('Same bank account cannot be selected twice.');
+                return;
+            }
+            if (!amount || parseFloat(amount) <= 0) { showToast('Please enter an amount greater than 0.'); return; }
+
+            const payload = {
+                firm_code: editingFirmCode,
+                vch_date: vchDate,
+                bank_ledger_code: bankLedgerCode,
+                ledger_code: ledgerCode,
+                chq_no: chqNo,
+                amount: amount,
+                remarks: remarks
+            };
+
+            try {
+                const res = await fetch(`/api/transactions/${encodeURIComponent(editingFirmCode)}/BR/${editingVoucherNumber}/`, {
+                    method: 'PUT',
+                    headers: apiHeaders(),
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    showToast(data.message || 'Bank receipt updated successfully!');
+                    closeEditBrModal();
+                    fetchAll();
+                } else {
+                    const err = await res.json().catch(() => null);
+                    showToast(err && err.error ? err.error : 'Failed to update bank receipt');
+                }
+            } catch (err) {
+                showToast('Network error while updating bank receipt');
             }
         }
 
@@ -1261,19 +1469,13 @@
             if (!bankLedgerCode) { showToast('Please select a bank account to deposit into.'); return; }
             if (!ledgerCode) { showToast('Please select a received from ledger.'); return; }
             if (bankLedgerCode.toUpperCase() === ledgerCode.toUpperCase()) {
-                showToast('Bank account and Received From ledger cannot be the same account.');
+                showToast('Same bank account cannot be selected twice.');
                 return;
             }
             if (!amount || parseFloat(amount) <= 0) { showToast('Please enter an amount greater than 0.'); return; }
 
-            const isEdit = editingVoucherNumber !== null;
-            const endpoint = isEdit 
-                ? `/api/transactions/${encodeURIComponent(editingFirmCode)}/BR/${editingVoucherNumber}/`
-                : '/api/transactions/bank-receipt/';
-            const method = isEdit ? 'PUT' : 'POST';
-
             const payload = {
-                firm_code: isEdit ? editingFirmCode : firmCode,
+                firm_code: firmCode,
                 vch_date: vchDate,
                 bank_ledger_code: bankLedgerCode,
                 ledger_code: ledgerCode,
@@ -1283,22 +1485,22 @@
             };
 
             try {
-                const res = await fetch(endpoint, {
-                    method: method,
+                const res = await fetch('/api/transactions/bank-receipt/', {
+                    method: 'POST',
                     headers: apiHeaders(),
                     body: JSON.stringify(payload)
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    showToast(data.message || (isEdit ? 'Bank receipt updated successfully!' : 'Bank receipt posted successfully!'));
+                    showToast(data.message || 'Bank receipt posted successfully!');
                     resetBrForm();
                     fetchAll();
                 } else {
                     const err = await res.json().catch(() => null);
-                    showToast(err && err.error ? err.error : (isEdit ? 'Failed to update bank receipt' : 'Failed to post bank receipt'));
+                    showToast(err && err.error ? err.error : 'Failed to post bank receipt');
                 }
             } catch (err) {
-                showToast(isEdit ? 'Network error while updating bank receipt' : 'Network error while posting bank receipt');
+                showToast('Network error while posting bank receipt');
             }
         }
 
@@ -1387,7 +1589,7 @@
                 if (res.ok) {
                     showToast(`Voucher #${vchNumber} deleted`);
                     if (editingVoucherNumber === vchNumber && editingFirmCode === firmCode) {
-                        resetBrForm();
+                        closeEditBrModal();
                     }
                     fetchAll();
                     onBrFirmChanged();

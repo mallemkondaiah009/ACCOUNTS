@@ -1084,8 +1084,8 @@
                         <td>${getCategoryBadge(l.group_category)}</td>
                         <td style="font-size:0.82rem; color:var(--text-muted); max-width:240px;">${addressStr}</td>
                         <td class="actions-cell">
-                            <button class="btn-action btn-edit" onclick="editLedger('${escapeHtml(l.Ledgercode)}')">${ICONS.edit}<span>Edit</span></button>
-                            <button class="btn-action btn-delete" onclick="deleteLedger('${escapeHtml(l.Ledgercode)}')">${ICONS.delete}<span>Delete</span></button>
+                            <button class="btn-action btn-edit" onclick="editLedger('${escapeHtml(l.Ledgercode)}')" title="Edit Ledger">${ICONS.edit}</button>
+                            <button class="btn-action btn-delete" onclick="deleteLedger('${escapeHtml(l.Ledgercode)}')" title="Delete Ledger">${ICONS.delete}</button>
                         </td>
                     </tr>
                 `;
