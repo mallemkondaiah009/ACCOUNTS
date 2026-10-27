@@ -25,6 +25,7 @@ from masters.views import (
     CashPaymentPageView,
     BankPaymentPageView,
     BankReceiptPageView,
+    JournalVoucherPageView,
 )
 
 urlpatterns = [
@@ -37,6 +38,7 @@ urlpatterns = [
     path('cash-payment/', CashPaymentPageView.as_view(), name='cash-payment-page'),
     path('bank-payment/', BankPaymentPageView.as_view(), name='bank-payment-page'),
     path('bank-receipt/', BankReceiptPageView.as_view(), name='bank-receipt-page'),
+    path('journal-voucher/', JournalVoucherPageView.as_view(), name='journal-voucher-page'),
     path('api/', include('masters.urls')),
 ]
 

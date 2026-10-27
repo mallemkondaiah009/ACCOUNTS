@@ -23,7 +23,8 @@ from .serializers import (
     CashReceiptCreateSerializer,
     CashPaymentCreateSerializer,
     BankPaymentCreateSerializer,
-    BankReceiptCreateSerializer
+    BankReceiptCreateSerializer,
+    JournalVoucherCreateSerializer
 )
 
 
@@ -79,6 +80,12 @@ class BankReceiptPageView(APIView):
     """Page view for Bank Receipt (BR)."""
     def get(self, request):
         return render(request, 'masters/bank_receipt.html', {'active_page': 'bank_receipt'})
+
+
+class JournalVoucherPageView(APIView):
+    """Page view for Journal Voucher (JV)."""
+    def get(self, request):
+        return render(request, 'masters/journal_voucher.html', {'active_page': 'journal_voucher'})
 
 
 class FirmMasterListCreateAPIView(APIView):
@@ -676,6 +683,67 @@ class BankReceiptCreateAPIView(APIView):
         }, status=status.HTTP_201_CREATED)
 
 
+class JournalVoucherCreateAPIView(APIView):
+    """
+    APIView to post Journal Voucher (JV) implementing single-entry:
+    - Exactly 1 row in 'trans' table
+    - type='D' (if dr_amount) or type='C' (if cr_amount)
+    - contra=0
+    POST /api/transactions/journal-voucher/
+    """
+    def post(self, request):
+        serializer = JournalVoucherCreateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        data = serializer.validated_data
+        firm_code = data['firm_code']
+        vch_date = data['vch_date']
+        ledger_code = data['ledger_code']
+        contra_code = data['contra_code']
+        dr_amount = data.get('dr_amount')
+        cr_amount = data.get('cr_amount')
+        remarks = data.get('remarks', '').strip()
+
+        if dr_amount is not None and dr_amount > 0:
+            amount = dr_amount
+            txn_type = TransactionType.DEBIT
+        else:
+            amount = cr_amount
+            txn_type = TransactionType.CREDIT
+
+        with transaction.atomic():
+            firm = FirmMaster.objects.select_for_update().get(firm_code=firm_code)
+
+            # Auto calculate next voucher number for JV
+            max_num = Transaction.objects.filter(
+                firm=firm,
+                vch_type=VoucherType.JOURNAL_VOUCHER
+            ).aggregate(Max('vch_number'))['vch_number__max'] or 0
+            vch_number = max_num + 1
+
+            t = Transaction.objects.create(
+                firm=firm,
+                vch_type=VoucherType.JOURNAL_VOUCHER,
+                vch_number=vch_number,
+                vch_date=vch_date,
+                ledger_code=ledger_code,
+                ref_code=contra_code,
+                remarks=remarks,
+                chq_no=None,
+                amount=amount,
+                type=txn_type,
+                contra=0
+            )
+
+        return Response({
+            'message': f'Journal Voucher #{vch_number} posted successfully.',
+            'vch_number': vch_number,
+            'firm_code': firm_code,
+            'entries': TransactionSerializer([t], many=True).data
+        }, status=status.HTTP_201_CREATED)
+
+
 class TransactionListAPIView(APIView):
     """
     APIView for listing recorded transactions with filtering.
@@ -739,6 +807,7 @@ class VoucherDetailAPIView(APIView):
             'vch_number': vch_number,
             'vch_date': str(primary.vch_date),
             'amount': str(primary.amount),
+            'type': primary.type,
             'remarks': primary.remarks or '',
             'chq_no': primary.chq_no or '',
             'ledger_code': primary.ledger_code,
@@ -756,23 +825,59 @@ class VoucherDetailAPIView(APIView):
         remarks = data.get('remarks', '')
         chq_no = data.get('chq_no', '') or None
         bank_ledger_code = data.get('bank_ledger_code')
+        contra_code = data.get('contra_code') or data.get('ref_code')
+        txn_type_input = data.get('type')
+        dr_amount = data.get('dr_amount')
+        cr_amount = data.get('cr_amount')
 
         if not vch_date:
             return Response({'error': 'Voucher date is required.'}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            amt_val = float(amount)
-            if amt_val <= 0:
-                return Response({'error': 'A valid positive amount is required.'}, status=status.HTTP_400_BAD_REQUEST)
-        except (TypeError, ValueError):
-            return Response({'error': 'A valid numeric amount is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if not ledger_code:
-            return Response({'error': 'Party ledger is required.'}, status=status.HTTP_400_BAD_REQUEST)
-        if vch_type_upper in ('BP', 'BR'):
-            if not bank_ledger_code:
-                return Response({'error': 'Bank ledger is required.'}, status=status.HTTP_400_BAD_REQUEST)
-            if bank_ledger_code.strip().upper() == ledger_code.strip().upper():
-                return Response({'error': 'Same bank account cannot be selected twice.'}, status=status.HTTP_400_BAD_REQUEST)
+        if vch_type_upper == 'JV':
+            if not ledger_code:
+                return Response({'error': 'Ledger is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not contra_code:
+                return Response({'error': 'Contra ledger is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            if ledger_code.strip().upper() == contra_code.strip().upper():
+                return Response({'error': 'Same ledger account cannot be selected twice.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if dr_amount is not None and float(dr_amount or 0) > 0:
+                amount = dr_amount
+                prim_type = TransactionType.DEBIT
+            elif cr_amount is not None and float(cr_amount or 0) > 0:
+                amount = cr_amount
+                prim_type = TransactionType.CREDIT
+            elif txn_type_input in ('D', 'C'):
+                prim_type = txn_type_input
+            else:
+                prim_type = TransactionType.DEBIT
+
+            try:
+                amt_val = float(amount)
+                if amt_val <= 0:
+                    return Response({'error': 'A valid positive amount is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            except (TypeError, ValueError):
+                return Response({'error': 'A valid numeric amount is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            prim_ref = contra_code.strip()
+            contra_code_val = None
+            contra_ref_val = None
+            contra_type = None
+        else:
+            try:
+                amt_val = float(amount)
+                if amt_val <= 0:
+                    return Response({'error': 'A valid positive amount is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            except (TypeError, ValueError):
+                return Response({'error': 'A valid numeric amount is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if not ledger_code:
+                return Response({'error': 'Party ledger is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            if vch_type_upper in ('BP', 'BR'):
+                if not bank_ledger_code:
+                    return Response({'error': 'Bank ledger is required.'}, status=status.HTTP_400_BAD_REQUEST)
+                if bank_ledger_code.strip().upper() == ledger_code.strip().upper():
+                    return Response({'error': 'Same bank account cannot be selected twice.'}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
             rows = Transaction.objects.select_for_update().filter(
@@ -791,26 +896,28 @@ class VoucherDetailAPIView(APIView):
                 prim_type = TransactionType.CREDIT
                 contra_type = TransactionType.DEBIT
                 prim_ref = 'CASH'
-                contra_code = 'CASH'
-                contra_ref = ledger_code
+                contra_code_val = 'CASH'
+                contra_ref_val = ledger_code
             elif vch_type_upper == 'CP':
                 prim_type = TransactionType.DEBIT
                 contra_type = TransactionType.CREDIT
                 prim_ref = 'CASH'
-                contra_code = 'CASH'
-                contra_ref = ledger_code
+                contra_code_val = 'CASH'
+                contra_ref_val = ledger_code
             elif vch_type_upper == 'BP':
                 prim_type = TransactionType.DEBIT
                 contra_type = TransactionType.CREDIT
                 prim_ref = bank_ledger_code
-                contra_code = bank_ledger_code
-                contra_ref = ledger_code
+                contra_code_val = bank_ledger_code
+                contra_ref_val = ledger_code
             elif vch_type_upper == 'BR':
                 prim_type = TransactionType.CREDIT
                 contra_type = TransactionType.DEBIT
                 prim_ref = bank_ledger_code
-                contra_code = bank_ledger_code
-                contra_ref = ledger_code
+                contra_code_val = bank_ledger_code
+                contra_ref_val = ledger_code
+            elif vch_type_upper == 'JV':
+                pass
             else:
                 return Response({'error': f'Unsupported voucher type {vch_type}.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -824,11 +931,11 @@ class VoucherDetailAPIView(APIView):
                 primary.type = prim_type
                 primary.save()
 
-            if contra:
+            if contra and vch_type_upper != 'JV':
                 contra.vch_date = vch_date
                 contra.amount = amount
-                contra.ledger_code = contra_code
-                contra.ref_code = contra_ref
+                contra.ledger_code = contra_code_val
+                contra.ref_code = contra_ref_val
                 contra.remarks = remarks
                 contra.chq_no = chq_no
                 contra.type = contra_type

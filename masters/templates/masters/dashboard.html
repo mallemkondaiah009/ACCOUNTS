@@ -287,6 +287,7 @@
         .cat-icon-cp { color: #e11d48; background: #fff1f2; border-color: #fecdd3; }
         .cat-icon-bp { color: #0284c7; background: #f0f9ff; border-color: #bae6fd; }
         .cat-icon-br { color: #0d9488; background: #f0fdfa; border-color: #99f6e4; }
+        .cat-icon-jv { color: #6366f1; background: #eef2ff; border-color: #c7d2fe; }
 
         .cat-count {
             font-size: 1.75rem;
@@ -399,6 +400,7 @@
         .type-CP { background: #ffe4e6; color: #be123c; border: 1px solid #fecdd3; }
         .type-BP { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
         .type-BR { background: #ccfbf1; color: #0f766e; border: 1px solid #99f6e4; }
+        .type-JV { background: #eef2ff; color: #6366f1; border: 1px solid #c7d2fe; }
 
         .badge-debit {
             background: #fee2e2;
@@ -486,6 +488,7 @@
                 <a href="/cash-payment/" class="nav-item">Cash Payment (CP)</a>
                 <a href="/bank-payment/" class="nav-item">Bank Payment (BP)</a>
                 <a href="/bank-receipt/" class="nav-item">Bank Receipt (BR)</a>
+                <a href="/journal-voucher/" class="nav-item">Journal Voucher (JV)</a>
             </nav>
         </div>
     </header>
@@ -610,6 +613,23 @@
                     <span class="cat-link-text">New Bank Receipt &rarr;</span>
                 </div>
             </a>
+
+            <!-- 8. JOURNAL VOUCHER -->
+            <a href="/journal-voucher/" class="cat-card">
+                <div>
+                    <div class="cat-header">
+                        <div class="cat-icon-wrap cat-icon-jv">
+                            <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        </div>
+                        <div id="stat-jv" class="cat-count">-</div>
+                    </div>
+                    <h4 class="cat-title">Journal Voucher (JV)</h4>
+                    <p class="cat-desc">Adjustments & transfers: Single-entry voucher with <span class="badge-debit">DR</span> or <span class="badge-credit">CR</span> amount.</p>
+                </div>
+                <div class="cat-footer">
+                    <span class="cat-link-text">New Journal Voucher &rarr;</span>
+                </div>
+            </a>
         </div>
 
         <!-- RECENT VOUCHERS ACTIVITY -->
@@ -687,11 +707,14 @@
                     const cpCount = primaryVouchers.filter(t => t.vch_type === 'CP').length;
                     const bpCount = primaryVouchers.filter(t => t.vch_type === 'BP').length;
                     const brCount = primaryVouchers.filter(t => t.vch_type === 'BR').length;
+                    const jvCount = primaryVouchers.filter(t => t.vch_type === 'JV').length;
 
                     document.getElementById('stat-cr').innerText = crCount;
                     document.getElementById('stat-cp').innerText = cpCount;
                     document.getElementById('stat-bp').innerText = bpCount;
                     document.getElementById('stat-br').innerText = brCount;
+                    const statJvEl = document.getElementById('stat-jv');
+                    if (statJvEl) statJvEl.innerText = jvCount;
 
                     document.getElementById('total-vouchers-badge').innerText = `${primaryVouchers.length} Total Vouchers`;
 
@@ -711,15 +734,20 @@
 
             tbody.innerHTML = vouchers.map(v => {
                 const amountFormatted = Number(v.amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                const isReceipt = (v.vch_type === 'CR' || v.vch_type === 'BR');
-                const primaryBadge = isReceipt
+                let isCredit = false;
+                if (v.vch_type === 'JV') {
+                    isCredit = (v.type === 'C');
+                } else {
+                    isCredit = (v.vch_type === 'CR' || v.vch_type === 'BR');
+                }
+                const primaryBadge = isCredit
                     ? '<span class="badge-credit" style="margin-right: 6px;">CR</span>'
                     : '<span class="badge-debit" style="margin-right: 6px;">DR</span>';
-                const contraBadge = isReceipt
+                const contraBadge = isCredit
                     ? '<span class="badge-debit" style="margin-right: 6px;">DR</span>'
                     : '<span class="badge-credit" style="margin-right: 6px;">CR</span>';
-                const primaryColor = isReceipt ? '#16a34a' : '#dc2626';
-                const contraColor = isReceipt ? '#dc2626' : '#16a34a';
+                const primaryColor = isCredit ? '#16a34a' : '#dc2626';
+                const contraColor = isCredit ? '#dc2626' : '#16a34a';
 
                 return `
                     <tr>

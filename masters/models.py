@@ -153,6 +153,7 @@ class VoucherType(models.TextChoices):
     BANK_RECEIPT = 'BR', 'Bank Receipt'
     CASH_PAYMENT = 'CP', 'Cash Payment'
     BANK_PAYMENT = 'BP', 'Bank Payment'
+    JOURNAL_VOUCHER = 'JV', 'Journal Voucher'
 
 
 class TransactionType(models.TextChoices):

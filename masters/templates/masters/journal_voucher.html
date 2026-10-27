@@ -1,0 +1,1686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Journal Voucher (JV) | ACCOUNTS MASTER</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --border-focus: #6366f1;
+            
+            --accent-primary: #6366f1;
+            --accent-hover: #4f46e5;
+            --accent-light: #eef2ff;
+            --accent-border: #c7d2fe;
+            
+            --debit-red: #dc2626;
+            --credit-green: #16a34a;
+            --danger: #ef4444;
+            --danger-bg: #fef2f2;
+            
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* STRICT SHARP CORNERS */
+        *, *::before, *::after {
+            box-sizing: border-box;
+            border-radius: 0 !important;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ── HEADER & NAVIGATION (MATCHING DASHBOARD) ── */
+        header {
+            border-bottom: none;
+            background: var(--bg-body);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: none;
+        }
+
+        .header-inner {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.25rem 1.5rem 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-link {
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            line-height: 1.2;
+            margin: 0;
+        }
+
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .header-nav::-webkit-scrollbar { display: none; }
+
+        .nav-item {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-weight: 600;
+            padding: 8px 14px;
+            border-bottom: 2px solid transparent;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .nav-item:hover {
+            color: var(--text-main);
+            background: #f8fafc;
+        }
+
+        .nav-item.active {
+            color: var(--accent-primary);
+            border-bottom-color: var(--accent-primary);
+            background: #eef2ff;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 10px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0 !important;
+            transition: all 0.15s ease;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .mobile-menu-btn svg {
+            pointer-events: none;
+        }
+
+        .mobile-menu-btn .icon-close {
+            display: none;
+        }
+
+        .mobile-menu-btn.open .icon-close {
+            display: block;
+        }
+
+        .mobile-menu-btn.open .icon-hamburger {
+            display: none;
+        }
+
+        .mobile-menu-btn:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        /* ── MAIN LAYOUT ── */
+        main {
+            flex: 1;
+            max-width: 1440px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 1rem 1.5rem 2rem;
+        }
+
+        .page-header-center {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-header-center h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            margin: 0 0 0.4rem 0;
+            text-transform: uppercase;
+        }
+
+        .page-header-center p {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            margin: 0;
+        }
+
+        /* ── FORM CARD ── */
+        .form-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 1.8rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.2rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group.col-span-2 {
+            grid-column: span 2;
+        }
+
+        .form-group.col-span-3 {
+            grid-column: span 3;
+        }
+
+        .form-group.col-span-4 {
+            grid-column: span 4;
+        }
+
+        label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-main);
+        }
+
+        .required-star {
+            color: var(--debit-red);
+        }
+
+        input[type="text"],
+        input[type="date"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            background-color: #ffffff;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.88rem;
+            outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: var(--border-focus);
+            box-shadow: 0 0 0 1px var(--border-focus);
+        }
+
+        input:disabled,
+        select:disabled {
+            background-color: #f1f5f9;
+            color: var(--text-muted);
+            cursor: not-allowed;
+            border-color: #cbd5e1;
+        }
+
+        .dr-input-wrapper input {
+            border-color: #fca5a5;
+        }
+        .dr-input-wrapper input:focus {
+            border-color: var(--debit-red);
+            box-shadow: 0 0 0 1px var(--debit-red);
+        }
+
+        .cr-input-wrapper input {
+            border-color: #86efac;
+        }
+        .cr-input-wrapper input:focus {
+            border-color: var(--credit-green);
+            box-shadow: 0 0 0 1px var(--credit-green);
+        }
+
+        .amount-hint {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        /* ── PREVIEW BOX ── */
+        .preview-box {
+            margin-top: 1.4rem;
+            padding: 1.1rem 1.4rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+            border: 1px solid var(--accent-border);
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.2rem;
+            align-items: center;
+        }
+
+        .preview-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .preview-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .preview-value {
+            font-size: 0.92rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .preview-amount {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--accent-primary);
+        }
+
+        .badge-type-dr {
+            display: inline-block;
+            background: #fee2e2;
+            color: var(--debit-red);
+            border: 1px solid #fca5a5;
+            padding: 3px 8px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-type-cr {
+            display: inline-block;
+            background: #dcfce7;
+            color: var(--credit-green);
+            border: 1px solid #86efac;
+            padding: 3px 8px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-type-none {
+            display: inline-block;
+            background: #f1f5f9;
+            color: var(--text-muted);
+            border: 1px solid #cbd5e1;
+            padding: 3px 8px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        /* ── ACTIONS ROW ── */
+        .form-actions {
+            margin-top: 1.4rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-primary);
+            color: #ffffff;
+            border: 1px solid var(--accent-primary);
+            padding: 10px 22px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-hover);
+            border-color: var(--accent-hover);
+        }
+
+        .btn-reset {
+            background-color: #ffffff;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            padding: 10px 18px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .btn-reset:hover {
+            background-color: #f1f5f9;
+            color: var(--text-main);
+        }
+
+        /* ── TABLE CARD ── */
+        .table-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .table-toolbar {
+            padding: 1.2rem 1.4rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-title-wrap h3 {
+            margin: 0;
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .toolbar-filters {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            min-width: 260px;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.84rem;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-main);
+            vertical-align: middle;
+        }
+
+        tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        .amount-cell {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 700;
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .table-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-action {
+            background: none;
+            border: 1px solid var(--border-color);
+            padding: 5px 9px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.74rem;
+            font-weight: 700;
+            transition: all 0.15s ease;
+        }
+
+        .btn-edit {
+            color: #4f46e5;
+            background-color: #eef2ff;
+            border-color: #c7d2fe;
+        }
+        .btn-edit:hover {
+            background-color: #e0e7ff;
+            color: #4338ca;
+        }
+
+        .btn-delete {
+            color: var(--debit-red);
+            background-color: #fef2f2;
+            border-color: #fca5a5;
+        }
+        .btn-delete:hover {
+            background-color: #fee2e2;
+        }
+
+        /* ── MODALS (CRISP, RESPONSIVE, 100DVH SAFE) ── */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            background: rgba(15, 23, 42, 0.5);
+            display: none;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 680px;
+            max-height: 92vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: modalFadeIn 0.15s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 1rem 1.4rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #ffffff;
+            flex-shrink: 0;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--text-main);
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            font-size: 1.4rem;
+            line-height: 1;
+        }
+
+        .modal-close-btn:hover {
+            color: var(--text-main);
+        }
+
+        .modal-body {
+            padding: 1.1rem 1.4rem;
+            background: #ffffff;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .modal-footer {
+            padding: 0.85rem 1.4rem;
+            border-top: 1px solid var(--border-color);
+            background: #f8fafc;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        /* ── TOAST NOTIFICATIONS ── */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1100;
+        }
+
+        .toast {
+            background: #0f172a;
+            color: #ffffff;
+            border-left: 4px solid var(--accent-primary);
+            padding: 12px 18px;
+            font-size: 0.86rem;
+            font-weight: 600;
+            box-shadow: var(--shadow-md);
+            animation: slideIn 0.2s ease-out;
+            max-width: 360px;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* ── RESPONSIVE DESIGN ── */
+        @media (max-width: 1024px) {
+            .form-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .preview-box {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 991px) {
+            .header-inner {
+                padding: 0.85rem 1.25rem;
+                flex-wrap: nowrap;
+                position: relative;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+            }
+
+            .header-nav {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                width: 100%;
+                background: #ffffff;
+                border-top: 1px solid var(--border-color);
+                border-bottom: 2px solid var(--border-color);
+                box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+                flex-direction: column;
+                align-items: stretch;
+                padding: 4px 0;
+                z-index: 1000;
+                gap: 0;
+                max-height: 80vh;
+                overflow-y: auto;
+            }
+
+            .header-nav.open {
+                display: flex !important;
+            }
+
+            .header-nav .nav-item {
+                display: flex !important;
+                padding: 12px 20px;
+                border-bottom: 1px solid #f1f5f9;
+                font-size: 0.88rem;
+                width: 100%;
+                border-radius: 0 !important;
+                box-sizing: border-box;
+            }
+
+            .header-nav .nav-item.active {
+                background: #eef2ff;
+                border-left: 4px solid var(--accent-primary);
+                border-bottom: 1px solid #f1f5f9;
+            }
+        }
+
+        @media (max-width: 768px) {
+
+            main {
+                padding: 1rem 0.8rem;
+            }
+
+            .form-card {
+                padding: 1.1rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 0.9rem;
+            }
+
+            .form-group.col-span-2,
+            .form-group.col-span-3,
+            .form-group.col-span-4 {
+                grid-column: span 1;
+            }
+
+            .preview-box {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
+            }
+
+            .modal {
+                max-height: 94dvh !important;
+                padding: 0 !important;
+            }
+
+            .modal-overlay {
+                padding: 8px !important;
+            }
+
+            .modal-header, .modal-body, .modal-footer {
+                padding-left: 1rem !important;
+                padding-right: 1rem !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- APPLICATION HEADER (MATCHING DASHBOARD) -->
+    <header>
+        <div class="header-inner">
+            <div class="brand">
+                <a href="/" class="brand-link">
+                    <h1 class="brand-title">Accounting Master</h1>
+                </a>
+            </div>
+            <button class="mobile-menu-btn" id="mobileMenuBtn" type="button" aria-label="Toggle Navigation Menu" onclick="toggleMobileMenu(event)">
+                <svg class="icon-hamburger" viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+                <svg class="icon-close" viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <nav class="header-nav" id="headerNav">
+                <a href="/" class="nav-item">Dashboard</a>
+                <a href="/firms/" class="nav-item">Firm Master</a>
+                <a href="/groups/" class="nav-item">Group Master</a>
+                <a href="/ledgers/" class="nav-item">Ledger Master</a>
+                <a href="/cash-receipt/" class="nav-item">Cash Receipt (CR)</a>
+                <a href="/cash-payment/" class="nav-item">Cash Payment (CP)</a>
+                <a href="/bank-payment/" class="nav-item">Bank Payment (BP)</a>
+                <a href="/bank-receipt/" class="nav-item">Bank Receipt (BR)</a>
+                <a href="/journal-voucher/" class="nav-item active">Journal Voucher (JV)</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="page-header-center">
+            <h2>JOURNAL VOUCHER ENTRY (JV)</h2>
+            <p>Post single-entry journal adjustments, non-cash transactions, or ledger transfers</p>
+        </div>
+
+        <!-- JOURNAL VOUCHER ENTRY FORM -->
+        <div class="form-card">
+            <form id="jv-form" onsubmit="saveJournalVoucher(event)">
+                <div class="form-grid">
+                    <!-- Firm -->
+                    <div class="form-group">
+                        <label for="jv-firm">Firm <span class="required-star">*</span></label>
+                        <select id="jv-firm" required onchange="onFirmChanged()">
+                            <option value="" disabled selected>-- Select Firm --</option>
+                        </select>
+                    </div>
+
+                    <!-- Voucher Number -->
+                    <div class="form-group">
+                        <label for="jv-vch-no">Auto Voucher No</label>
+                        <input type="text" id="jv-vch-no" placeholder="Auto-generated" disabled>
+                    </div>
+
+                    <!-- Voucher Date -->
+                    <div class="form-group">
+                        <label for="jv-vch-date">Voucher Date <span class="required-star">*</span></label>
+                        <input type="date" id="jv-vch-date" required onchange="updatePreview()">
+                    </div>
+
+                    <!-- Ledger -->
+                    <div class="form-group">
+                        <label for="jv-ledger">Ledger Account <span class="required-star">*</span></label>
+                        <select id="jv-ledger" required onchange="onLedgerChanged('primary')">
+                            <option value="" disabled selected>-- Select Ledger --</option>
+                        </select>
+                    </div>
+
+                    <!-- Contra -->
+                    <div class="form-group">
+                        <label for="jv-contra">Contra Ledger <span class="required-star">*</span></label>
+                        <select id="jv-contra" required onchange="onLedgerChanged('contra')">
+                            <option value="" disabled selected>-- Select Contra Ledger --</option>
+                        </select>
+                    </div>
+
+                    <!-- DR Amount -->
+                    <div class="form-group dr-input-wrapper">
+                        <label for="jv-dr-amount" style="color: var(--debit-red);">DR Amount (Debit)</label>
+                        <input type="number" id="jv-dr-amount" step="0.01" min="0.01" placeholder="0.00" oninput="onDrAmountInput()">
+                        <span class="amount-hint">Entering DR clears CR</span>
+                    </div>
+
+                    <!-- CR Amount -->
+                    <div class="form-group cr-input-wrapper">
+                        <label for="jv-cr-amount" style="color: var(--credit-green);">CR Amount (Credit)</label>
+                        <input type="number" id="jv-cr-amount" step="0.01" min="0.01" placeholder="0.00" oninput="onCrAmountInput()">
+                        <span class="amount-hint">Entering CR clears DR</span>
+                    </div>
+
+                    <!-- Remarks -->
+                    <div class="form-group">
+                        <label for="jv-remarks">Remarks</label>
+                        <input type="text" id="jv-remarks" maxlength="50" placeholder="Narration (optional)" oninput="updatePreview()">
+                    </div>
+                </div>
+
+                <!-- LIVE VOUCHER PREVIEW -->
+                <div class="preview-box">
+                    <div class="preview-item">
+                        <span class="preview-label">Firm & Voucher #</span>
+                        <span class="preview-value" id="preview-firm-vch">Select firm</span>
+                    </div>
+                    <div class="preview-item">
+                        <span class="preview-label">Ledger & Contra</span>
+                        <span class="preview-value" id="preview-ledgers">- vs -</span>
+                    </div>
+                    <div class="preview-item">
+                        <span class="preview-label">Entry Type</span>
+                        <div id="preview-badge"><span class="badge-type-none">No Amount</span></div>
+                    </div>
+                    <div class="preview-item" style="text-align: right;">
+                        <span class="preview-label">Voucher Amount</span>
+                        <span class="preview-amount" id="preview-amount">₹ 0.00</span>
+                    </div>
+                </div>
+
+                <!-- FORM ACTIONS -->
+                <div class="form-actions">
+                    <button type="button" class="btn-reset" onclick="resetForm()">Clear Form</button>
+                    <button type="submit" class="btn-primary" id="btn-save-jv">
+                        <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        Post Journal Voucher
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- RECENT JOURNAL VOUCHERS TABLE -->
+        <div class="table-card">
+            <div class="table-toolbar">
+                <div class="toolbar-title-wrap">
+                    <h3>Recent Journal Vouchers</h3>
+                </div>
+                <div class="toolbar-filters">
+                    <select id="filter-firm" onchange="renderTransactions()" style="width: auto; min-width: 170px;">
+                        <option value="">All Firms</option>
+                    </select>
+                    <div class="search-box">
+                        <input type="text" id="search-input" placeholder="Search vouchers..." oninput="renderTransactions()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 100px;">Date</th>
+                            <th style="width: 85px;">Vch #</th>
+                            <th style="width: 130px;">Firm</th>
+                            <th>Ledger</th>
+                            <th>Contra</th>
+                            <th style="width: 80px; text-align: center;">Type</th>
+                            <th style="width: 130px; text-align: right;">Amount (₹)</th>
+                            <th>Remarks</th>
+                            <th style="width: 120px; text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactions-tbody">
+                        <tr>
+                            <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">
+                                Loading recorded vouchers...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- EDIT MODAL -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <form id="edit-form" class="modal-form" onsubmit="submitEditVoucher(event)">
+                <div class="modal-header">
+                    <h3 id="modal-title">Edit Journal Voucher</h3>
+                    <button type="button" class="modal-close-btn" onclick="closeEditModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-grid" style="grid-template-columns: 1fr 1fr;">
+                        <div class="form-group">
+                            <label>Firm</label>
+                            <input type="text" id="modal-firm-display" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label>Voucher #</label>
+                            <input type="text" id="modal-vch-no" disabled>
+                        </div>
+                        <div class="form-group">
+                            <label for="modal-vch-date">Voucher Date <span class="required-star">*</span></label>
+                            <input type="date" id="modal-vch-date" required onchange="updateModalPreview()">
+                        </div>
+                        <div class="form-group">
+                            <label for="modal-ledger">Ledger Account <span class="required-star">*</span></label>
+                            <select id="modal-ledger" required onchange="onModalLedgerChanged('primary')"></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="modal-contra">Contra Ledger <span class="required-star">*</span></label>
+                            <select id="modal-contra" required onchange="onModalLedgerChanged('contra')"></select>
+                        </div>
+                        <div class="form-group dr-input-wrapper">
+                            <label for="modal-dr-amount" style="color: var(--debit-red);">DR Amount (Debit)</label>
+                            <input type="number" id="modal-dr-amount" step="0.01" min="0.01" placeholder="0.00" oninput="onModalDrAmountInput()">
+                        </div>
+                        <div class="form-group cr-input-wrapper">
+                            <label for="modal-cr-amount" style="color: var(--credit-green);">CR Amount (Credit)</label>
+                            <input type="number" id="modal-cr-amount" step="0.01" min="0.01" placeholder="0.00" oninput="onModalCrAmountInput()">
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label for="modal-remarks">Remarks</label>
+                            <input type="text" id="modal-remarks" maxlength="50" placeholder="Narration (optional)">
+                        </div>
+                    </div>
+
+                    <!-- Modal preview -->
+                    <div class="preview-box" style="margin-top: 1rem; grid-template-columns: 1fr 1fr;">
+                        <div class="preview-item">
+                            <span class="preview-label">Entry Type</span>
+                            <div id="modal-preview-badge"><span class="badge-type-none">No Amount</span></div>
+                        </div>
+                        <div class="preview-item" style="text-align: right;">
+                            <span class="preview-label">Amount</span>
+                            <span class="preview-amount" id="modal-preview-amount">₹ 0.00</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-reset" onclick="closeEditModal()">Cancel</button>
+                    <button type="submit" class="btn-primary" id="btn-update-jv">Update Voucher</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- DELETE CONFIRMATION MODAL -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal" style="max-width: 440px;">
+            <div class="modal-header">
+                <h3>Confirm Deletion</h3>
+                <button type="button" class="modal-close-btn" onclick="closeDeleteModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin: 0; color: var(--text-main); font-size: 0.92rem;" id="delete-prompt-text">
+                    Are you sure you want to delete this journal voucher?
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-reset" onclick="closeDeleteModal()">Cancel</button>
+                <button type="button" class="btn-action btn-delete" style="padding: 9px 18px; font-size: 0.88rem;" onclick="confirmDeleteVoucher()">
+                    Delete Voucher
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // State variables
+        let firms = [];
+        let ledgers = [];
+        let transactions = [];
+        let editingVoucherNumber = null;
+        let editingFirmCode = null;
+        let deletingVoucherNumber = null;
+        let deletingFirmCode = null;
+
+        // CSRF Token Helper
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function apiHeaders() {
+            return {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken') || ''
+            };
+        }
+
+        function showToast(msg) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerText = msg;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function toggleMobileMenu(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            const nav = document.getElementById('headerNav');
+            const btn = document.getElementById('mobileMenuBtn');
+            if (nav) {
+                const isOpen = nav.classList.toggle('open');
+                if (btn) {
+                    btn.classList.toggle('open', isOpen);
+                    btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                }
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            const nav = document.getElementById('headerNav');
+            const btn = document.getElementById('mobileMenuBtn');
+            if (nav && nav.classList.contains('open')) {
+                if (!nav.contains(e.target) && (!btn || !btn.contains(e.target))) {
+                    nav.classList.remove('open');
+                    if (btn) {
+                        btn.classList.remove('open');
+                        btn.setAttribute('aria-expanded', 'false');
+                    }
+                }
+            }
+        });
+
+        function initTodayDate() {
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('jv-vch-date');
+            if (dateInput && !dateInput.value) {
+                dateInput.value = today;
+            }
+        }
+
+        // Mutual exclusivity: DR clears CR
+        function onDrAmountInput() {
+            const drVal = document.getElementById('jv-dr-amount').value;
+            if (drVal && parseFloat(drVal) > 0) {
+                document.getElementById('jv-cr-amount').value = '';
+            }
+            updatePreview();
+        }
+
+        // Mutual exclusivity: CR clears DR
+        function onCrAmountInput() {
+            const crVal = document.getElementById('jv-cr-amount').value;
+            if (crVal && parseFloat(crVal) > 0) {
+                document.getElementById('jv-dr-amount').value = '';
+            }
+            updatePreview();
+        }
+
+        // Modal Mutual Exclusivity
+        function onModalDrAmountInput() {
+            const drVal = document.getElementById('modal-dr-amount').value;
+            if (drVal && parseFloat(drVal) > 0) {
+                document.getElementById('modal-cr-amount').value = '';
+            }
+            updateModalPreview();
+        }
+
+        function onModalCrAmountInput() {
+            const crVal = document.getElementById('modal-cr-amount').value;
+            if (crVal && parseFloat(crVal) > 0) {
+                document.getElementById('modal-dr-amount').value = '';
+            }
+            updateModalPreview();
+        }
+
+        // Duplicate Ledger Check for Entry Form
+        function onLedgerChanged(changedSide) {
+            const ledgerSel = document.getElementById('jv-ledger');
+            const contraSel = document.getElementById('jv-contra');
+
+            if (ledgerSel && contraSel && ledgerSel.value && contraSel.value) {
+                if (ledgerSel.value.trim().toUpperCase() === contraSel.value.trim().toUpperCase()) {
+                    showToast('Same ledger account cannot be selected twice.');
+                    if (changedSide === 'primary') {
+                        ledgerSel.value = '';
+                    } else {
+                        contraSel.value = '';
+                    }
+                }
+            }
+            updatePreview();
+        }
+
+        // Duplicate Ledger Check for Modal Form
+        function onModalLedgerChanged(changedSide) {
+            const ledgerSel = document.getElementById('modal-ledger');
+            const contraSel = document.getElementById('modal-contra');
+
+            if (ledgerSel && contraSel && ledgerSel.value && contraSel.value) {
+                if (ledgerSel.value.trim().toUpperCase() === contraSel.value.trim().toUpperCase()) {
+                    showToast('Same ledger account cannot be selected twice.');
+                    if (changedSide === 'primary') {
+                        ledgerSel.value = '';
+                    } else {
+                        contraSel.value = '';
+                    }
+                }
+            }
+            updateModalPreview();
+        }
+
+        async function onFirmChanged() {
+            const firmCode = document.getElementById('jv-firm').value;
+            if (!firmCode) {
+                document.getElementById('jv-vch-no').value = '';
+                updatePreview();
+                return;
+            }
+            try {
+                const res = await fetch(`/api/transactions/next-vch-no/?firm_code=${encodeURIComponent(firmCode)}&vch_type=JV`);
+                if (res.ok) {
+                    const data = await res.json();
+                    document.getElementById('jv-vch-no').value = `#${data.next_vch_number}`;
+                }
+            } catch (err) {
+                console.error('Failed to get next voucher number:', err);
+            }
+            updatePreview();
+        }
+
+        function updatePreview() {
+            const firmSel = document.getElementById('jv-firm');
+            const firmCode = firmSel ? firmSel.value : '';
+            const firmObj = firms.find(f => f.FirmCode === firmCode);
+            const firmText = firmObj ? `${firmObj.FirmCode} - ${firmObj.Firmname}` : (firmCode || 'Select Firm');
+            const vchNo = document.getElementById('jv-vch-no').value || '#-';
+            document.getElementById('preview-firm-vch').innerText = `${firmText} (${vchNo})`;
+
+            const ledgerCode = document.getElementById('jv-ledger').value;
+            const contraCode = document.getElementById('jv-contra').value;
+            const lObj = ledgers.find(l => l.Ledgercode === ledgerCode);
+            const cObj = ledgers.find(l => l.Ledgercode === contraCode);
+            const lName = lObj ? `${lObj.LEDGERNAME} (${lObj.Ledgercode})` : (ledgerCode || 'Ledger');
+            const cName = cObj ? `${cObj.LEDGERNAME} (${cObj.Ledgercode})` : (contraCode || 'Contra');
+            document.getElementById('preview-ledgers').innerText = `${lName}  vs  ${cName}`;
+
+            const drVal = parseFloat(document.getElementById('jv-dr-amount').value || 0);
+            const crVal = parseFloat(document.getElementById('jv-cr-amount').value || 0);
+            const badgeEl = document.getElementById('preview-badge');
+            const amountEl = document.getElementById('preview-amount');
+
+            if (drVal > 0) {
+                badgeEl.innerHTML = '<span class="badge-type-dr">DEBIT (DR)</span>';
+                amountEl.innerText = `₹ ${drVal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                amountEl.style.color = 'var(--debit-red)';
+            } else if (crVal > 0) {
+                badgeEl.innerHTML = '<span class="badge-type-cr">CREDIT (CR)</span>';
+                amountEl.innerText = `₹ ${crVal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                amountEl.style.color = 'var(--credit-green)';
+            } else {
+                badgeEl.innerHTML = '<span class="badge-type-none">No Amount</span>';
+                amountEl.innerText = '₹ 0.00';
+                amountEl.style.color = 'var(--accent-primary)';
+            }
+        }
+
+        function updateModalPreview() {
+            const drVal = parseFloat(document.getElementById('modal-dr-amount').value || 0);
+            const crVal = parseFloat(document.getElementById('modal-cr-amount').value || 0);
+            const badgeEl = document.getElementById('modal-preview-badge');
+            const amountEl = document.getElementById('modal-preview-amount');
+
+            if (drVal > 0) {
+                badgeEl.innerHTML = '<span class="badge-type-dr">DEBIT (DR)</span>';
+                amountEl.innerText = `₹ ${drVal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                amountEl.style.color = 'var(--debit-red)';
+            } else if (crVal > 0) {
+                badgeEl.innerHTML = '<span class="badge-type-cr">CREDIT (CR)</span>';
+                amountEl.innerText = `₹ ${crVal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                amountEl.style.color = 'var(--credit-green)';
+            } else {
+                badgeEl.innerHTML = '<span class="badge-type-none">No Amount</span>';
+                amountEl.innerText = '₹ 0.00';
+                amountEl.style.color = 'var(--accent-primary)';
+            }
+        }
+
+        function resetForm() {
+            document.getElementById('jv-firm').value = '';
+            document.getElementById('jv-vch-no').value = '';
+            document.getElementById('jv-ledger').value = '';
+            document.getElementById('jv-contra').value = '';
+            document.getElementById('jv-dr-amount').value = '';
+            document.getElementById('jv-cr-amount').value = '';
+            document.getElementById('jv-remarks').value = '';
+            initTodayDate();
+            updatePreview();
+        }
+
+        // Fetch Masters
+        async function fetchMasters() {
+            try {
+                const [firmsRes, ledgersRes] = await Promise.all([
+                    fetch('/api/firms/'),
+                    fetch('/api/ledgers/')
+                ]);
+
+                if (firmsRes.ok) {
+                    const data = await firmsRes.json();
+                    firms = Array.isArray(data) ? data : (data.results || []);
+                    populateFirms();
+                }
+
+                if (ledgersRes.ok) {
+                    const data = await ledgersRes.json();
+                    ledgers = Array.isArray(data) ? data : (data.results || []);
+                    populateLedgers();
+                }
+            } catch (err) {
+                console.error('Error fetching master data:', err);
+                showToast('Failed to load firms or ledgers.');
+            }
+        }
+
+        function populateFirms() {
+            const firmSel = document.getElementById('jv-firm');
+            const filterSel = document.getElementById('filter-firm');
+            
+            let html = '<option value="" disabled selected>-- Select Firm --</option>';
+            let filterHtml = '<option value="">All Firms</option>';
+            
+            firms.forEach(f => {
+                html += `<option value="${escapeHtml(f.FirmCode)}">${escapeHtml(f.FirmCode)} - ${escapeHtml(f.Firmname)}</option>`;
+                filterHtml += `<option value="${escapeHtml(f.FirmCode)}">${escapeHtml(f.FirmCode)} - ${escapeHtml(f.Firmname)}</option>`;
+            });
+
+            firmSel.innerHTML = html;
+            filterSel.innerHTML = filterHtml;
+        }
+
+        function populateLedgers() {
+            const lSel = document.getElementById('jv-ledger');
+            const cSel = document.getElementById('jv-contra');
+
+            let html = '<option value="" disabled selected>-- Select Ledger --</option>';
+            let contraHtml = '<option value="" disabled selected>-- Select Contra Ledger --</option>';
+
+            ledgers.forEach(l => {
+                html += `<option value="${escapeHtml(l.Ledgercode)}">${escapeHtml(l.Ledgercode)} - ${escapeHtml(l.LEDGERNAME)}</option>`;
+                contraHtml += `<option value="${escapeHtml(l.Ledgercode)}">${escapeHtml(l.Ledgercode)} - ${escapeHtml(l.LEDGERNAME)}</option>`;
+            });
+
+            lSel.innerHTML = html;
+            cSel.innerHTML = contraHtml;
+        }
+
+        // Fetch Transactions
+        async function fetchTransactions() {
+            try {
+                const res = await fetch('/api/transactions/?vch_type=JV');
+                if (res.ok) {
+                    const data = await res.json();
+                    transactions = Array.isArray(data) ? data : (data.results || []);
+                    renderTransactions();
+                }
+            } catch (err) {
+                console.error('Error fetching transactions:', err);
+                showToast('Failed to load recent vouchers.');
+            }
+        }
+
+        function renderTransactions() {
+            const tbody = document.getElementById('transactions-tbody');
+            const search = (document.getElementById('search-input').value || '').trim().toLowerCase();
+            const filterFirm = document.getElementById('filter-firm').value;
+
+            let filtered = transactions;
+            if (filterFirm) {
+                filtered = filtered.filter(t => t.firm_code === filterFirm);
+            }
+            if (search) {
+                filtered = filtered.filter(t => 
+                    String(t.vch_number).includes(search) ||
+                    (t.firm_code || '').toLowerCase().includes(search) ||
+                    (t.firm_name || '').toLowerCase().includes(search) ||
+                    (t.ledger_code || '').toLowerCase().includes(search) ||
+                    (t.ledger_name || '').toLowerCase().includes(search) ||
+                    (t.ref_code || '').toLowerCase().includes(search) ||
+                    (t.ref_name || '').toLowerCase().includes(search) ||
+                    (t.remarks || '').toLowerCase().includes(search) ||
+                    String(t.amount).includes(search)
+                );
+            }
+
+            if (!filtered.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">
+                            ${search || filterFirm ? 'No matching journal vouchers found.' : 'No journal vouchers recorded yet.'}
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(t => {
+                const isDebit = (t.type === 'D');
+                const badge = isDebit 
+                    ? '<span class="badge-type-dr">DR</span>' 
+                    : '<span class="badge-type-cr">CR</span>';
+                const formattedAmt = parseFloat(t.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                const amtColor = isDebit ? 'var(--debit-red)' : 'var(--credit-green)';
+
+                return `
+                    <tr>
+                        <td>${escapeHtml(t.vch_date)}</td>
+                        <td><strong style="font-family: 'JetBrains Mono', monospace;">#${t.vch_number}</strong></td>
+                        <td>${escapeHtml(t.firm_code)}</td>
+                        <td><strong>${escapeHtml(t.ledger_name || t.ledger_code)}</strong> <span style="font-size:0.75rem; color:var(--text-muted);">(${escapeHtml(t.ledger_code)})</span></td>
+                        <td><strong>${escapeHtml(t.ref_name || t.ref_code || '-')}</strong> <span style="font-size:0.75rem; color:var(--text-muted);">(${escapeHtml(t.ref_code || '-')})</span></td>
+                        <td style="text-align: center;">${badge}</td>
+                        <td class="amount-cell" style="color: ${amtColor};">₹ ${formattedAmt}</td>
+                        <td style="color: var(--text-muted);">${escapeHtml(t.remarks || '-')}</td>
+                        <td style="text-align: center;">
+                            <div class="table-actions" style="justify-content: center;">
+                                <button type="button" class="btn-action btn-edit" onclick="openEditModal('${escapeHtml(t.firm_code)}', ${t.vch_number})">
+                                    Edit
+                                </button>
+                                <button type="button" class="btn-action btn-delete" onclick="openDeleteModal('${escapeHtml(t.firm_code)}', ${t.vch_number})">
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Post Journal Voucher
+        async function saveJournalVoucher(e) {
+            e.preventDefault();
+
+            const firmCode = document.getElementById('jv-firm').value;
+            const vchDate = document.getElementById('jv-vch-date').value;
+            const ledgerCode = document.getElementById('jv-ledger').value;
+            const contraCode = document.getElementById('jv-contra').value;
+            const drAmount = document.getElementById('jv-dr-amount').value;
+            const crAmount = document.getElementById('jv-cr-amount').value;
+            const remarks = document.getElementById('jv-remarks').value.trim();
+
+            if (!firmCode) {
+                showToast('Please select a firm.');
+                return;
+            }
+            if (!vchDate) {
+                showToast('Please select a voucher date.');
+                return;
+            }
+            if (!ledgerCode) {
+                showToast('Please select a ledger account.');
+                return;
+            }
+            if (!contraCode) {
+                showToast('Please select a contra ledger.');
+                return;
+            }
+            if (ledgerCode.trim().toUpperCase() === contraCode.trim().toUpperCase()) {
+                showToast('Same ledger account cannot be selected twice.');
+                return;
+            }
+
+            const drVal = parseFloat(drAmount || 0);
+            const crVal = parseFloat(crAmount || 0);
+
+            if (drVal <= 0 && crVal <= 0) {
+                showToast('Please enter an amount in either DR Amount or CR Amount.');
+                return;
+            }
+
+            const payload = {
+                firm_code: firmCode,
+                vch_date: vchDate,
+                ledger_code: ledgerCode,
+                contra_code: contraCode,
+                remarks: remarks
+            };
+
+            if (drVal > 0) {
+                payload.dr_amount = drVal;
+            } else {
+                payload.cr_amount = crVal;
+            }
+
+            const btnSave = document.getElementById('btn-save-jv');
+            btnSave.disabled = true;
+            btnSave.innerText = 'Posting...';
+
+            try {
+                const res = await fetch('/api/transactions/journal-voucher/', {
+                    method: 'POST',
+                    headers: apiHeaders(),
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    showToast(data.message || 'Journal Voucher posted successfully!');
+                    resetForm();
+                    await fetchTransactions();
+                } else {
+                    const err = await res.json().catch(() => null);
+                    let errMsg = 'Failed to post journal voucher.';
+                    if (err) {
+                        if (typeof err === 'string') errMsg = err;
+                        else if (err.error) errMsg = err.error;
+                        else if (err.non_field_errors) errMsg = err.non_field_errors.join(' ');
+                        else {
+                            const firstKey = Object.keys(err)[0];
+                            errMsg = Array.isArray(err[firstKey]) ? err[firstKey][0] : String(err[firstKey]);
+                        }
+                    }
+                    showToast(errMsg);
+                }
+            } catch (err) {
+                console.error('Error saving journal voucher:', err);
+                showToast('Network error while posting journal voucher.');
+            } finally {
+                btnSave.disabled = false;
+                btnSave.innerHTML = `
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Post Journal Voucher
+                `;
+            }
+        }
+
+        // Edit Modal
+        async function openEditModal(firmCode, vchNumber) {
+            try {
+                const res = await fetch(`/api/transactions/${encodeURIComponent(firmCode)}/JV/${vchNumber}/`);
+                if (!res.ok) {
+                    const err = await res.json().catch(() => null);
+                    showToast(err && err.error ? err.error : 'Failed to fetch voucher for edit.');
+                    return;
+                }
+
+                const v = await res.json();
+                editingVoucherNumber = v.vch_number;
+                editingFirmCode = v.firm_code;
+
+                const firmObj = firms.find(f => f.FirmCode === v.firm_code);
+                const firmLabel = firmObj ? `${v.firm_code} - ${firmObj.Firmname}` : v.firm_code;
+
+                document.getElementById('modal-title').innerText = `Edit Journal Voucher #${v.vch_number}`;
+                document.getElementById('modal-firm-display').value = firmLabel;
+                document.getElementById('modal-vch-no').value = `#${v.vch_number}`;
+                document.getElementById('modal-vch-date').value = v.vch_date;
+
+                // Populate modal ledger selects
+                const mLedger = document.getElementById('modal-ledger');
+                const mContra = document.getElementById('modal-contra');
+
+                let html = '<option value="" disabled>-- Select Ledger --</option>';
+                let contraHtml = '<option value="" disabled>-- Select Contra Ledger --</option>';
+
+                ledgers.forEach(l => {
+                    html += `<option value="${escapeHtml(l.Ledgercode)}">${escapeHtml(l.Ledgercode)} - ${escapeHtml(l.LEDGERNAME)}</option>`;
+                    contraHtml += `<option value="${escapeHtml(l.Ledgercode)}">${escapeHtml(l.Ledgercode)} - ${escapeHtml(l.LEDGERNAME)}</option>`;
+                });
+
+                mLedger.innerHTML = html;
+                mContra.innerHTML = contraHtml;
+
+                mLedger.value = v.ledger_code;
+                mContra.value = v.ref_code;
+
+                if (v.type === 'D') {
+                    document.getElementById('modal-dr-amount').value = v.amount;
+                    document.getElementById('modal-cr-amount').value = '';
+                } else {
+                    document.getElementById('modal-cr-amount').value = v.amount;
+                    document.getElementById('modal-dr-amount').value = '';
+                }
+
+                document.getElementById('modal-remarks').value = v.remarks || '';
+
+                updateModalPreview();
+                document.getElementById('editModal').classList.add('active');
+            } catch (err) {
+                console.error('Error opening edit modal:', err);
+                showToast('Error opening edit modal.');
+            }
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+            editingVoucherNumber = null;
+            editingFirmCode = null;
+        }
+
+        async function submitEditVoucher(e) {
+            e.preventDefault();
+            if (!editingVoucherNumber || !editingFirmCode) return;
+
+            const vchDate = document.getElementById('modal-vch-date').value;
+            const ledgerCode = document.getElementById('modal-ledger').value;
+            const contraCode = document.getElementById('modal-contra').value;
+            const drAmount = document.getElementById('modal-dr-amount').value;
+            const crAmount = document.getElementById('modal-cr-amount').value;
+            const remarks = document.getElementById('modal-remarks').value.trim();
+
+            if (!vchDate) { showToast('Please select a voucher date.'); return; }
+            if (!ledgerCode) { showToast('Please select a ledger.'); return; }
+            if (!contraCode) { showToast('Please select a contra ledger.'); return; }
+            if (ledgerCode.trim().toUpperCase() === contraCode.trim().toUpperCase()) {
+                showToast('Same ledger account cannot be selected twice.');
+                return;
+            }
+
+            const drVal = parseFloat(drAmount || 0);
+            const crVal = parseFloat(crAmount || 0);
+
+            if (drVal <= 0 && crVal <= 0) {
+                showToast('Please enter an amount in either DR Amount or CR Amount.');
+                return;
+            }
+
+            const payload = {
+                vch_date: vchDate,
+                ledger_code: ledgerCode,
+                contra_code: contraCode,
+                remarks: remarks,
+                type: drVal > 0 ? 'D' : 'C',
+                amount: drVal > 0 ? drVal : crVal,
+                dr_amount: drVal > 0 ? drVal : null,
+                cr_amount: crVal > 0 ? crVal : null
+            };
+
+            const btnUpdate = document.getElementById('btn-update-jv');
+            btnUpdate.disabled = true;
+            btnUpdate.innerText = 'Updating...';
+
+            try {
+                const res = await fetch(`/api/transactions/${encodeURIComponent(editingFirmCode)}/JV/${editingVoucherNumber}/`, {
+                    method: 'PUT',
+                    headers: apiHeaders(),
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    showToast(`Journal Voucher #${editingVoucherNumber} updated successfully!`);
+                    closeEditModal();
+                    await fetchTransactions();
+                } else {
+                    const err = await res.json().catch(() => null);
+                    showToast(err && err.error ? err.error : 'Failed to update voucher.');
+                }
+            } catch (err) {
+                console.error('Error updating voucher:', err);
+                showToast('Network error while updating voucher.');
+            } finally {
+                btnUpdate.disabled = false;
+                btnUpdate.innerText = 'Update Voucher';
+            }
+        }
+
+        // Delete Modal
+        function openDeleteModal(firmCode, vchNumber) {
+            deletingFirmCode = firmCode;
+            deletingVoucherNumber = vchNumber;
+            document.getElementById('delete-prompt-text').innerText = 
+                `Are you sure you want to delete Journal Voucher #${vchNumber} (${firmCode})? This action cannot be undone.`;
+            document.getElementById('deleteModal').classList.add('active');
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').classList.remove('active');
+            deletingFirmCode = null;
+            deletingVoucherNumber = null;
+        }
+
+        async function confirmDeleteVoucher() {
+            if (!deletingFirmCode || !deletingVoucherNumber) return;
+
+            try {
+                const res = await fetch(`/api/transactions/${encodeURIComponent(deletingFirmCode)}/JV/${deletingVoucherNumber}/`, {
+                    method: 'DELETE',
+                    headers: apiHeaders()
+                });
+
+                if (res.ok) {
+                    showToast(`Journal Voucher #${deletingVoucherNumber} deleted successfully.`);
+                    closeDeleteModal();
+                    await fetchTransactions();
+                } else {
+                    const err = await res.json().catch(() => null);
+                    showToast(err && err.error ? err.error : 'Failed to delete voucher.');
+                }
+            } catch (err) {
+                console.error('Error deleting voucher:', err);
+                showToast('Network error while deleting voucher.');
+            }
+        }
+
+        // Initialize on DOM load
+        document.addEventListener('DOMContentLoaded', async () => {
+            initTodayDate();
+            await fetchMasters();
+            await fetchTransactions();
+        });
+    </script>
+</body>
+</html>

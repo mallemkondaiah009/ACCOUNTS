@@ -294,6 +294,51 @@ class BankReceiptCreateSerializer(serializers.Serializer):
         return attrs
 
 
+class JournalVoucherCreateSerializer(serializers.Serializer):
+    firm_code = serializers.CharField(max_length=5)
+    vch_date = serializers.DateField()
+    ledger_code = serializers.CharField(max_length=5)
+    contra_code = serializers.CharField(max_length=5)
+    dr_amount = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True, min_value=Decimal('0.01'))
+    cr_amount = serializers.DecimalField(max_digits=12, decimal_places=2, required=False, allow_null=True, min_value=Decimal('0.01'))
+    remarks = serializers.CharField(max_length=50, required=False, allow_blank=True, default='')
+
+    def validate_firm_code(self, value):
+        value = value.strip()
+        if not FirmMaster.objects.filter(firm_code=value).exists():
+            raise serializers.ValidationError("Selected Firm does not exist.")
+        return value
+
+    def validate_ledger_code(self, value):
+        value = value.strip()
+        if not LedgerMaster.objects.filter(ledger_code=value).exists():
+            raise serializers.ValidationError(f"Ledger '{value}' does not exist.")
+        return value
+
+    def validate_contra_code(self, value):
+        value = value.strip()
+        if not LedgerMaster.objects.filter(ledger_code=value).exists():
+            raise serializers.ValidationError(f"Contra ledger '{value}' does not exist.")
+        return value
+
+    def validate(self, attrs):
+        ledger = attrs.get('ledger_code', '').strip()
+        contra = attrs.get('contra_code', '').strip()
+        if ledger.upper() == contra.upper():
+            raise serializers.ValidationError("Same ledger account cannot be selected twice.")
+
+        dr = attrs.get('dr_amount')
+        cr = attrs.get('cr_amount')
+
+        if (dr is None or dr <= 0) and (cr is None or cr <= 0):
+            raise serializers.ValidationError("Please enter an amount in either DR Amount or CR Amount.")
+        if dr is not None and dr > 0 and cr is not None and cr > 0:
+            raise serializers.ValidationError("At a time, you can only enter a value in either DR Amount or CR Amount.")
+
+        return attrs
+
+
+
 
 
 
