@@ -551,6 +551,45 @@
             .page-header-center h2 {
                 font-size: 1.2rem;
             }
+
+            .modal-overlay {
+                padding: 10px !important;
+                align-items: center !important;
+            }
+
+            .modal {
+                width: 100% !important;
+                max-width: 100% !important;
+                max-height: 94vh !important;
+                max-height: 94dvh !important;
+            }
+
+            .modal-header {
+                padding: 0.85rem 1rem !important;
+            }
+
+            .modal-body {
+                padding: 0.85rem 1rem !important;
+            }
+
+            .modal-footer {
+                padding: 0.75rem 1rem !important;
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 8px !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            .modal-footer button,
+            .modal-footer .btn-submit,
+            .modal-footer .btn-secondary {
+                flex: 1 1 50% !important;
+                width: auto !important;
+                justify-content: center !important;
+                padding: 11px 14px !important;
+                font-size: 0.88rem !important;
+            }
         }
 
         @media (max-width: 480px) {
@@ -712,14 +751,18 @@
             left: 0;
             width: 100vw;
             height: 100vh;
+            height: 100dvh;
             background: rgba(15, 23, 42, 0.5);
             display: none;
             backdrop-filter: blur(6px);
             -webkit-backdrop-filter: blur(6px);
-            z-index: 100;
+            z-index: 1000;
             align-items: center;
             justify-content: center;
             padding: 1rem;
+            box-sizing: border-box;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .modal-overlay.active { display: flex; }
@@ -728,26 +771,38 @@
             background: #ffffff;
             border: 1px solid var(--border-color);
             width: 100%;
-            max-width: 440px;
+            max-width: 600px;
+            max-height: 90vh;
+            max-height: 90dvh;
             display: flex;
             flex-direction: column;
             box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.2);
             overflow: hidden;
+            margin: auto;
+            border-radius: 0 !important;
+        }
+
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
         }
 
         .modal-header {
-            padding: 1.25rem 1.75rem;
+            padding: 1rem 1.4rem;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
             background: #f8fafc;
+            flex-shrink: 0;
         }
 
         .modal-title {
-            font-size: 1.12rem;
+            font-size: 1.1rem;
             font-weight: 700;
-            color: var(--danger);
             display: flex;
             align-items: center;
             gap: 10px;
@@ -763,20 +818,27 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 1.4rem;
+            line-height: 1;
         }
 
         .modal-body {
-            padding: 1.75rem;
+            padding: 1.1rem 1.4rem;
             background: #ffffff;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+            -webkit-overflow-scrolling: touch;
         }
 
         .modal-footer {
-            padding: 1rem 1.75rem;
+            padding: 0.85rem 1.4rem;
             border-top: 1px solid var(--border-color);
             background: #f8fafc;
             display: flex;
             justify-content: flex-end;
             gap: 10px;
+            flex-shrink: 0;
         }
 
         .btn-secondary {
@@ -971,7 +1033,7 @@
 
     <!-- EDIT CASH PAYMENT MODAL -->
     <div id="editCpModal" class="modal-overlay">
-        <div class="modal" style="max-width: 580px; max-height: 92vh;">
+        <div class="modal">
             <div class="modal-header">
                 <h3 class="modal-title" style="color: #e11d48;">
                     <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -979,8 +1041,8 @@
                 </h3>
                 <button type="button" class="close-btn" onclick="closeEditCpModal()">&times;</button>
             </div>
-            <form id="modal-cp-form" onsubmit="submitEditCashPayment(event)">
-                <div class="modal-body" style="padding: 1.15rem 1.4rem; overflow-y: auto; max-height: calc(92vh - 130px);">
+            <form id="modal-cp-form" class="modal-form" onsubmit="submitEditCashPayment(event)">
+                <div class="modal-body">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0.75rem;">
                         <div class="form-group" style="margin-bottom: 0;">
                             <label>Firm</label>
@@ -1029,9 +1091,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer" style="padding: 0.85rem 1.4rem; border-top: 1px solid var(--border-color); background: #f8fafc; display: flex; justify-content: flex-end; gap: 10px;">
+                <div class="modal-footer">
                     <button type="button" class="btn-secondary" onclick="closeEditCpModal()">Cancel</button>
-                    <button type="submit" class="btn-submit" style="padding: 10px 20px;">
+                    <button type="submit" class="btn-submit">
                         <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                         <span>Update</span>
                     </button>
