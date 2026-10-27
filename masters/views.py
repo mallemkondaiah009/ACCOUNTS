@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.db import transaction
-from django.db.models import Q, Max
+from django.db.models import Q, Max, ProtectedError
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -28,17 +28,57 @@ from .serializers import (
 
 
 class StandardPagination(PageNumberPagination):
-    page_size = 50
+    page_size = 200
     page_size_query_param = 'page_size'
-    max_page_size = 100
+    max_page_size = 1000
 
 
 class DashboardAPIView(APIView):
-    """
-    APIView that renders the interactive accounts master dashboard.
-    """
+    """APIView that renders the interactive accounts master dashboard."""
     def get(self, request):
-        return render(request, 'masters/dashboard.html')
+        return render(request, 'masters/dashboard.html', {'active_page': 'dashboard'})
+
+
+class FirmMasterPageView(APIView):
+    """Page view for Firm Master."""
+    def get(self, request):
+        return render(request, 'masters/firm_master.html', {'active_page': 'firms'})
+
+
+class GroupMasterPageView(APIView):
+    """Page view for Group Master."""
+    def get(self, request):
+        return render(request, 'masters/group_master.html', {'active_page': 'groups'})
+
+
+class LedgerMasterPageView(APIView):
+    """Page view for Ledger Master."""
+    def get(self, request):
+        return render(request, 'masters/ledger_master.html', {'active_page': 'ledgers'})
+
+
+class CashReceiptPageView(APIView):
+    """Page view for Cash Receipt (CR)."""
+    def get(self, request):
+        return render(request, 'masters/cash_receipt.html', {'active_page': 'cash_receipt'})
+
+
+class CashPaymentPageView(APIView):
+    """Page view for Cash Payment (CP)."""
+    def get(self, request):
+        return render(request, 'masters/cash_payment.html', {'active_page': 'cash_payment'})
+
+
+class BankPaymentPageView(APIView):
+    """Page view for Bank Payment (BP)."""
+    def get(self, request):
+        return render(request, 'masters/bank_payment.html', {'active_page': 'bank_payment'})
+
+
+class BankReceiptPageView(APIView):
+    """Page view for Bank Receipt (BR)."""
+    def get(self, request):
+        return render(request, 'masters/bank_receipt.html', {'active_page': 'bank_receipt'})
 
 
 class FirmMasterListCreateAPIView(APIView):
@@ -125,8 +165,13 @@ class FirmMasterDetailAPIView(APIView):
 
     def delete(self, request, pk):
         firm = self.get_object(pk)
-        firm.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        try:
+            firm.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ProtectedError:
+            return Response({
+                'error': f"Cannot delete Firm '{pk}' because it is linked to existing transactions or records. Please delete its transactions first."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class GroupCategoriesAPIView(APIView):
@@ -210,8 +255,13 @@ class GroupMasterDetailAPIView(APIView):
 
     def delete(self, request, pk):
         group = self.get_object(pk)
-        group.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        try:
+            group.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ProtectedError:
+            return Response({
+                'error': f"Cannot delete Group #{pk} because it has associated ledgers or sub-groups. Please reassign or delete them first."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LedgerMasterListCreateAPIView(APIView):
@@ -291,8 +341,13 @@ class LedgerMasterDetailAPIView(APIView):
 
     def delete(self, request, pk):
         ledger = self.get_object(pk)
-        ledger.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        try:
+            ledger.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ProtectedError:
+            return Response({
+                'error': f"Cannot delete Ledger '{pk}' because it is referenced in transactions. Please delete associated vouchers first."
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class NextVoucherNumberAPIView(APIView):

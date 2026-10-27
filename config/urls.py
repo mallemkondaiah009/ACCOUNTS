@@ -16,12 +16,28 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from masters.views import DashboardAPIView
+from masters.views import (
+    DashboardAPIView,
+    FirmMasterPageView,
+    GroupMasterPageView,
+    LedgerMasterPageView,
+    CashReceiptPageView,
+    CashPaymentPageView,
+    BankPaymentPageView,
+    BankReceiptPageView,
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('masters.urls')),
     path('', DashboardAPIView.as_view(), name='dashboard'),
+    path('firms/', FirmMasterPageView.as_view(), name='firm-master-page'),
+    path('groups/', GroupMasterPageView.as_view(), name='group-master-page'),
+    path('ledgers/', LedgerMasterPageView.as_view(), name='ledger-master-page'),
+    path('cash-receipt/', CashReceiptPageView.as_view(), name='cash-receipt-page'),
+    path('cash-payment/', CashPaymentPageView.as_view(), name='cash-payment-page'),
+    path('bank-payment/', BankPaymentPageView.as_view(), name='bank-payment-page'),
+    path('bank-receipt/', BankReceiptPageView.as_view(), name='bank-receipt-page'),
+    path('api/', include('masters.urls')),
 ]
 
 
