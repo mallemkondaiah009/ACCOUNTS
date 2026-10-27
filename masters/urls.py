@@ -13,7 +13,7 @@ from .views import (
     BankPaymentCreateAPIView,
     BankReceiptCreateAPIView,
     TransactionListAPIView,
-    VoucherDeleteAPIView,
+    VoucherDetailAPIView,
 )
 
 urlpatterns = [
@@ -37,5 +37,5 @@ urlpatterns = [
     path('transactions/bank-payment/', BankPaymentCreateAPIView.as_view(), name='bank-payment-create'),
     path('transactions/bank-receipt/', BankReceiptCreateAPIView.as_view(), name='bank-receipt-create'),
     path('transactions/next-vch-no/', NextVoucherNumberAPIView.as_view(), name='transaction-next-vch-no'),
-    path('transactions/<str:firm_code>/<str:vch_type>/<int:vch_number>/', VoucherDeleteAPIView.as_view(), name='voucher-delete'),
+    path('transactions/<str:firm_code>/<str:vch_type>/<int:vch_number>/', VoucherDetailAPIView.as_view(), name='voucher-detail'),
 ]

@@ -634,6 +634,16 @@
             transition: all 0.15s ease;
         }
 
+        .btn-edit {
+            color: #4f46e5;
+            background: #eef2ff;
+            border-color: #c7d2fe;
+        }
+        .btn-edit:hover {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+
         .btn-delete {
             color: var(--danger);
             border-color: #fee2e2;
@@ -812,7 +822,7 @@
             <form id="cp-form" onsubmit="saveCashPayment(event)">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="cp-firm">Firm / Company *</label>
+                        <label for="cp-firm">Firm *</label>
                         <select id="cp-firm" required onchange="onCpFirmChanged()">
                             <option value="" disabled selected>-- Select Firm --</option>
                         </select>
@@ -837,7 +847,7 @@
                     </div>
                     <div class="form-group">
                         <label for="cp-remarks">Remarks</label>
-                        <input type="text" id="cp-remarks" placeholder="e.g. Paid cash for office stationery" maxlength="40">
+                        <input type="text" id="cp-remarks" maxlength="40">
                     </div>
                 </div>
 
@@ -863,10 +873,11 @@
                 </div>
 
                 <div class="form-actions">
-                    <button type="button" class="btn-secondary" onclick="resetCpForm()">Reset</button>
-                    <button type="submit" class="btn-submit">
+                    <button type="button" class="btn-secondary" id="cp-cancel-edit-btn" style="display: none;" onclick="cancelCpEdit()">Cancel Edit</button>
+                    <button type="button" class="btn-secondary" id="cp-reset-btn" onclick="resetCpForm()">Reset</button>
+                    <button type="submit" class="btn-submit" id="cp-submit-btn">
                         <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                        <span>Post Cash Payment Voucher</span>
+                        <span id="cp-submit-text">Save</span>
                     </button>
                 </div>
             </form>
@@ -897,7 +908,7 @@
                             <th>Paid From <span class="badge-credit" style="font-size:0.68rem; padding: 2px 6px;">CR</span></th>
                             <th style="width: 130px;">Amount</th>
                             <th>Remarks</th>
-                            <th style="width: 80px; text-align: right;">Action</th>
+                            <th style="width: 140px; text-align: right;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="cp-transactions-tbody">
@@ -932,6 +943,7 @@
 
     <script>
         const ICONS = {
+            edit: '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>',
             delete: '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>'
         };
 
@@ -939,6 +951,8 @@
         let ledgers = [];
         let cpTransactions = [];
         let confirmResolver = null;
+        let editingVoucherNumber = null;
+        let editingFirmCode = null;
 
         function getCookie(name) {
             let cookieValue = null;
@@ -1121,6 +1135,15 @@
         }
 
         function resetCpForm() {
+            editingVoucherNumber = null;
+            editingFirmCode = null;
+            const submitText = document.getElementById('cp-submit-text');
+            if (submitText) submitText.innerText = 'Save';
+            const cancelBtn = document.getElementById('cp-cancel-edit-btn');
+            if (cancelBtn) cancelBtn.style.display = 'none';
+            const firmSelect = document.getElementById('cp-firm');
+            if (firmSelect) firmSelect.disabled = false;
+
             document.getElementById('cp-amount').value = '';
             document.getElementById('cp-remarks').value = '';
             document.getElementById('cp-ledger').value = '';
@@ -1130,9 +1153,41 @@
             onCpFirmChanged();
         }
 
+        function editVoucher(firmCode, vchType, vchNumber) {
+            const voucher = cpTransactions.find(t => t.firm_code === firmCode && Number(t.vch_number) === Number(vchNumber) && Number(t.contra) === 0);
+            if (!voucher) return;
+
+            editingVoucherNumber = vchNumber;
+            editingFirmCode = firmCode;
+
+            const firmSelect = document.getElementById('cp-firm');
+            if (firmSelect) {
+                firmSelect.value = firmCode;
+                firmSelect.disabled = true;
+            }
+            document.getElementById('cp-vch-no').value = `#${vchNumber} (Editing)`;
+            document.getElementById('cp-vch-date').value = voucher.vch_date;
+            document.getElementById('cp-ledger').value = voucher.ledger_code;
+            document.getElementById('cp-amount').value = voucher.amount;
+            document.getElementById('cp-remarks').value = voucher.remarks || '';
+
+            const selected = ledgers.find(l => l.Ledgercode === voucher.ledger_code);
+            document.getElementById('cp-preview-ledger').innerText = selected ? `${selected.LEDGERNAME} (${selected.Ledgercode})` : voucher.ledger_code;
+            updateCpPreviewAmount();
+
+            document.getElementById('cp-submit-text').innerText = 'Update';
+            document.getElementById('cp-cancel-edit-btn').style.display = 'inline-flex';
+
+            document.querySelector('.form-card').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function cancelCpEdit() {
+            resetCpForm();
+        }
+
         async function saveCashPayment(e) {
             e.preventDefault();
-            const firmCode = document.getElementById('cp-firm').value;
+            const firmCode = editingFirmCode || document.getElementById('cp-firm').value;
             const vchDate = document.getElementById('cp-vch-date').value;
             const ledgerCode = document.getElementById('cp-ledger').value;
             const amount = document.getElementById('cp-amount').value;
@@ -1152,22 +1207,32 @@
             };
 
             try {
-                const res = await fetch('/api/transactions/cash-payment/', {
-                    method: 'POST',
-                    headers: apiHeaders(),
-                    body: JSON.stringify(payload)
-                });
+                let res;
+                if (editingVoucherNumber) {
+                    res = await fetch(`/api/transactions/${encodeURIComponent(firmCode)}/CP/${editingVoucherNumber}/`, {
+                        method: 'PUT',
+                        headers: apiHeaders(),
+                        body: JSON.stringify(payload)
+                    });
+                } else {
+                    res = await fetch('/api/transactions/cash-payment/', {
+                        method: 'POST',
+                        headers: apiHeaders(),
+                        body: JSON.stringify(payload)
+                    });
+                }
+
                 if (res.ok) {
                     const data = await res.json();
-                    showToast(data.message || 'Cash payment posted successfully!');
+                    showToast(data.message || (editingVoucherNumber ? 'Cash payment updated successfully!' : 'Cash payment posted successfully!'));
                     resetCpForm();
                     fetchAll();
                 } else {
                     const err = await res.json().catch(() => null);
-                    showToast(err && err.error ? err.error : 'Failed to post cash payment');
+                    showToast(err && err.error ? err.error : 'Failed to save cash payment');
                 }
             } catch (err) {
-                showToast('Network error while posting cash payment');
+                showToast('Network error while saving cash payment');
             }
         }
 
@@ -1220,7 +1285,11 @@
                         </td>
                         <td><strong style="color: #e11d48; font-size: 0.95rem;">₹ ${formattedAmount}</strong></td>
                         <td style="color: var(--text-muted); font-size: 0.82rem; max-width: 200px;">${escapeHtml(v.remarks || '-')}</td>
-                        <td style="text-align: right;">
+                        <td style="text-align: right; white-space: nowrap;">
+                            <button class="btn-action btn-edit" onclick="editVoucher('${escapeHtml(v.firm_code)}', '${escapeHtml(v.vch_type)}', ${v.vch_number})" title="Edit Voucher">
+                                ${ICONS.edit}
+                                <span>Edit</span>
+                            </button>
                             <button class="btn-action btn-delete" onclick="deleteVoucher('${escapeHtml(v.firm_code)}', '${escapeHtml(v.vch_type)}', ${v.vch_number})" title="Delete Voucher">
                                 ${ICONS.delete}
                             </button>
@@ -1248,6 +1317,9 @@
                 });
                 if (res.ok) {
                     showToast(`Voucher #${vchNumber} deleted`);
+                    if (editingVoucherNumber === vchNumber && editingFirmCode === firmCode) {
+                        resetCpForm();
+                    }
                     fetchAll();
                     onCpFirmChanged();
                 } else {

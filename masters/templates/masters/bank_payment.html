@@ -614,6 +614,16 @@
             transition: all 0.15s ease;
         }
 
+        .btn-edit {
+            color: #4f46e5;
+            background: #eef2ff;
+            border-color: #c7d2fe;
+        }
+        .btn-edit:hover {
+            background: #e0e7ff;
+            color: #4338ca;
+        }
+
         .btn-delete {
             color: var(--danger);
             border-color: #fee2e2;
@@ -792,7 +802,7 @@
             <form id="bp-form" onsubmit="saveBankPayment(event)">
                 <div class="form-grid">
                     <div class="form-group">
-                        <label for="bp-firm">Firm / Company *</label>
+                        <label for="bp-firm">Firm *</label>
                         <select id="bp-firm" required onchange="onBpFirmChanged()">
                             <option value="" disabled selected>-- Select Firm --</option>
                         </select>
@@ -819,7 +829,7 @@
                     </div>
                     <div class="form-group">
                         <label for="bp-chq-no">Cheque / UTR / Reference No</label>
-                        <input type="text" id="bp-chq-no" placeholder="e.g. CHQ-481902 / UTR12345" maxlength="20">
+                        <input type="text" id="bp-chq-no" maxlength="20">
                     </div>
                     <div class="form-group">
                         <label for="bp-amount">Payment Amount (₹) *</label>
@@ -827,7 +837,7 @@
                     </div>
                     <div class="form-group">
                         <label for="bp-remarks">Remarks</label>
-                        <input type="text" id="bp-remarks" placeholder="e.g. Payment for machinery invoice #901" maxlength="40">
+                        <input type="text" id="bp-remarks"  maxlength="40">
                     </div>
                 </div>
 
@@ -853,10 +863,11 @@
                 </div>
 
                 <div class="form-actions">
-                    <button type="button" class="btn-secondary" onclick="resetBpForm()">Reset</button>
-                    <button type="submit" class="btn-submit">
+                    <button type="button" class="btn-secondary" id="bp-cancel-edit-btn" style="display: none;" onclick="cancelBpEdit()">Cancel Edit</button>
+                    <button type="button" class="btn-secondary" id="bp-reset-btn" onclick="resetBpForm()">Reset</button>
+                    <button type="submit" class="btn-submit" id="bp-submit-btn">
                         <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-                        <span>Post Bank Payment Voucher</span>
+                        <span id="bp-submit-text">Save</span>
                     </button>
                 </div>
             </form>
@@ -888,7 +899,7 @@
                             <th style="width: 110px;">Chq / UTR</th>
                             <th style="width: 120px;">Amount</th>
                             <th>Remarks</th>
-                            <th style="width: 75px; text-align: right;">Action</th>
+                            <th style="width: 140px; text-align: right;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="bp-transactions-tbody">
@@ -923,6 +934,7 @@
 
     <script>
         const ICONS = {
+            edit: '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>',
             delete: '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>'
         };
 
@@ -930,6 +942,8 @@
         let ledgers = [];
         let bpTransactions = [];
         let confirmResolver = null;
+        let editingVoucherNumber = null;
+        let editingFirmCode = null;
 
         function getCookie(name) {
             let cookieValue = null;
@@ -1142,6 +1156,17 @@
         }
 
         function resetBpForm() {
+            editingVoucherNumber = null;
+            editingFirmCode = null;
+            const firmSelect = document.getElementById('bp-firm');
+            if (firmSelect) firmSelect.disabled = false;
+            const cancelBtn = document.getElementById('bp-cancel-edit-btn');
+            if (cancelBtn) cancelBtn.style.display = 'none';
+            const submitText = document.getElementById('bp-submit-text');
+            if (submitText) submitText.innerText = 'Post Bank Payment';
+            const banner = document.getElementById('bp-edit-banner');
+            if (banner) banner.remove();
+
             document.getElementById('bp-bank-ledger').value = '';
             document.getElementById('bp-ledger').value = '';
             document.getElementById('bp-chq-no').value = '';
@@ -1152,6 +1177,72 @@
             updateBpPreviewAmount();
             initBpDate();
             onBpFirmChanged();
+        }
+
+        function cancelBpEdit() {
+            resetBpForm();
+            showToast('Editing cancelled.');
+        }
+
+        async function editVoucher(firmCode, vchType, vchNumber) {
+            try {
+                const res = await fetch(`/api/transactions/${encodeURIComponent(firmCode)}/${encodeURIComponent(vchType)}/${vchNumber}/`);
+                if (!res.ok) {
+                    const err = await res.json().catch(() => null);
+                    showToast(err && err.error ? err.error : 'Failed to fetch voucher details for editing');
+                    return;
+                }
+                const v = await res.json();
+                editingVoucherNumber = v.vch_number;
+                editingFirmCode = v.firm_code;
+
+                const firmSelect = document.getElementById('bp-firm');
+                if (firmSelect) {
+                    firmSelect.value = v.firm_code;
+                    firmSelect.disabled = true;
+                }
+                const vchInput = document.getElementById('bp-vch-no');
+                if (vchInput) vchInput.value = v.vch_number;
+                const vchDate = document.getElementById('bp-vch-date');
+                if (vchDate) vchDate.value = v.vch_date;
+
+                const bankLedgerSelect = document.getElementById('bp-bank-ledger');
+                if (bankLedgerSelect) bankLedgerSelect.value = v.ref_code;
+                const ledgerSelect = document.getElementById('bp-ledger');
+                if (ledgerSelect) ledgerSelect.value = v.ledger_code;
+
+                const chqInput = document.getElementById('bp-chq-no');
+                if (chqInput) chqInput.value = v.chq_no || '';
+                const amountInput = document.getElementById('bp-amount');
+                if (amountInput) amountInput.value = v.amount;
+                const remarksInput = document.getElementById('bp-remarks');
+                if (remarksInput) remarksInput.value = v.remarks || '';
+
+                updateBpPreviewBank();
+                updateBpPreviewParty();
+                updateBpPreviewAmount();
+
+                const cancelBtn = document.getElementById('bp-cancel-edit-btn');
+                if (cancelBtn) cancelBtn.style.display = 'inline-flex';
+                const submitText = document.getElementById('bp-submit-text');
+                if (submitText) submitText.innerText = `Update Bank Payment #${v.vch_number}`;
+
+                let banner = document.getElementById('bp-edit-banner');
+                if (!banner) {
+                    banner = document.createElement('div');
+                    banner.id = 'bp-edit-banner';
+                    banner.style.cssText = 'background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 0.6rem 0.9rem; font-size: 0.85rem; font-weight: 600; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;';
+                    const form = document.getElementById('bank-payment-form');
+                    form.parentNode.insertBefore(banner, form);
+                }
+                banner.innerHTML = `<span>Editing Voucher <strong>#${escapeHtml(v.vch_number)}</strong> for Firm <strong>${escapeHtml(v.firm_code)}</strong></span>
+                                    <button type="button" onclick="cancelBpEdit()" style="background:none; border:none; color:#1e40af; font-weight:700; cursor:pointer; text-decoration:underline;">Cancel</button>`;
+
+                document.getElementById('bank-payment-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                showToast(`Loaded Voucher #${v.vch_number} for editing`);
+            } catch (err) {
+                showToast('Error loading voucher for edit');
+            }
         }
 
         async function saveBankPayment(e) {
@@ -1174,8 +1265,14 @@
             }
             if (!amount || parseFloat(amount) <= 0) { showToast('Please enter an amount greater than 0.'); return; }
 
+            const isEdit = editingVoucherNumber !== null;
+            const endpoint = isEdit 
+                ? `/api/transactions/${encodeURIComponent(editingFirmCode)}/BP/${editingVoucherNumber}/`
+                : '/api/transactions/bank-payment/';
+            const method = isEdit ? 'PUT' : 'POST';
+
             const payload = {
-                firm_code: firmCode,
+                firm_code: isEdit ? editingFirmCode : firmCode,
                 vch_date: vchDate,
                 bank_ledger_code: bankLedgerCode,
                 ledger_code: ledgerCode,
@@ -1185,22 +1282,22 @@
             };
 
             try {
-                const res = await fetch('/api/transactions/bank-payment/', {
-                    method: 'POST',
+                const res = await fetch(endpoint, {
+                    method: method,
                     headers: apiHeaders(),
                     body: JSON.stringify(payload)
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    showToast(data.message || 'Bank payment posted successfully!');
+                    showToast(data.message || (isEdit ? 'Bank payment updated successfully!' : 'Bank payment posted successfully!'));
                     resetBpForm();
                     fetchAll();
                 } else {
                     const err = await res.json().catch(() => null);
-                    showToast(err && err.error ? err.error : 'Failed to post bank payment');
+                    showToast(err && err.error ? err.error : (isEdit ? 'Failed to update bank payment' : 'Failed to post bank payment'));
                 }
             } catch (err) {
-                showToast('Network error while posting bank payment');
+                showToast(isEdit ? 'Network error while updating bank payment' : 'Network error while posting bank payment');
             }
         }
 
@@ -1257,7 +1354,10 @@
                         <td>${v.chq_no ? `<span class="code-pill">${escapeHtml(v.chq_no)}</span>` : '<span style="color:var(--text-dim);">-</span>'}</td>
                         <td><strong style="color: #0284c7; font-size: 0.95rem;">₹ ${formattedAmount}</strong></td>
                         <td style="color: var(--text-muted); font-size: 0.82rem; max-width: 180px;">${escapeHtml(v.remarks || '-')}</td>
-                        <td style="text-align: right;">
+                        <td style="text-align: right; white-space: nowrap;">
+                            <button class="btn-action btn-edit" onclick="editVoucher('${escapeHtml(v.firm_code)}', '${escapeHtml(v.vch_type)}', ${v.vch_number})" title="Edit Voucher">
+                                ${ICONS.edit}
+                            </button>
                             <button class="btn-action btn-delete" onclick="deleteVoucher('${escapeHtml(v.firm_code)}', '${escapeHtml(v.vch_type)}', ${v.vch_number})" title="Delete Voucher">
                                 ${ICONS.delete}
                             </button>
@@ -1285,6 +1385,9 @@
                 });
                 if (res.ok) {
                     showToast(`Voucher #${vchNumber} deleted`);
+                    if (editingVoucherNumber === vchNumber && editingFirmCode === firmCode) {
+                        resetBpForm();
+                    }
                     fetchAll();
                     onBpFirmChanged();
                 } else {

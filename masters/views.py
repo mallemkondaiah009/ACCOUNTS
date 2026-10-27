@@ -714,11 +714,129 @@ class TransactionListAPIView(APIView):
         return Response(serializer.data)
 
 
-class VoucherDeleteAPIView(APIView):
+class VoucherDetailAPIView(APIView):
     """
-    APIView to delete an entire voucher (both primary and contra rows) atomically.
+    APIView to retrieve, update, or delete an entire voucher (both primary and contra rows) atomically.
+    GET /api/transactions/<firm_code>/<vch_type>/<vch_number>/
+    PUT /api/transactions/<firm_code>/<vch_type>/<vch_number>/
     DELETE /api/transactions/<firm_code>/<vch_type>/<vch_number>/
     """
+    def get(self, request, firm_code, vch_type, vch_number):
+        rows = Transaction.objects.filter(
+            firm__firm_code=firm_code,
+            vch_type=vch_type.upper(),
+            vch_number=vch_number
+        ).order_by('contra')
+        if not rows.exists():
+            return Response({'error': 'Voucher not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        primary = rows.filter(contra=0).first() or rows.first()
+        contra = rows.filter(contra=1).first()
+
+        data = {
+            'firm_code': firm_code,
+            'vch_type': vch_type.upper(),
+            'vch_number': vch_number,
+            'vch_date': str(primary.vch_date),
+            'amount': str(primary.amount),
+            'remarks': primary.remarks or '',
+            'chq_no': primary.chq_no or '',
+            'ledger_code': primary.ledger_code,
+            'ref_code': primary.ref_code,
+            'entries': TransactionSerializer(rows, many=True).data
+        }
+        return Response(data)
+
+    def put(self, request, firm_code, vch_type, vch_number):
+        vch_type_upper = vch_type.upper()
+        data = request.data
+        vch_date = data.get('vch_date')
+        amount = data.get('amount')
+        ledger_code = data.get('ledger_code')
+        remarks = data.get('remarks', '')
+        chq_no = data.get('chq_no', '') or None
+        bank_ledger_code = data.get('bank_ledger_code')
+
+        if not vch_date:
+            return Response({'error': 'Voucher date is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            amt_val = float(amount)
+            if amt_val <= 0:
+                return Response({'error': 'A valid positive amount is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        except (TypeError, ValueError):
+            return Response({'error': 'A valid numeric amount is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not ledger_code:
+            return Response({'error': 'Party ledger is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if vch_type_upper in ('BP', 'BR') and not bank_ledger_code:
+            return Response({'error': 'Bank ledger is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            rows = Transaction.objects.select_for_update().filter(
+                firm__firm_code=firm_code,
+                vch_type=vch_type_upper,
+                vch_number=vch_number
+            ).order_by('contra')
+
+            if not rows.exists():
+                return Response({'error': 'Voucher not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+            primary = rows.filter(contra=0).first()
+            contra = rows.filter(contra=1).first()
+
+            if vch_type_upper == 'CR':
+                prim_type = TransactionType.CREDIT
+                contra_type = TransactionType.DEBIT
+                prim_ref = 'CASH'
+                contra_code = 'CASH'
+                contra_ref = ledger_code
+            elif vch_type_upper == 'CP':
+                prim_type = TransactionType.DEBIT
+                contra_type = TransactionType.CREDIT
+                prim_ref = 'CASH'
+                contra_code = 'CASH'
+                contra_ref = ledger_code
+            elif vch_type_upper == 'BP':
+                prim_type = TransactionType.DEBIT
+                contra_type = TransactionType.CREDIT
+                prim_ref = bank_ledger_code
+                contra_code = bank_ledger_code
+                contra_ref = ledger_code
+            elif vch_type_upper == 'BR':
+                prim_type = TransactionType.CREDIT
+                contra_type = TransactionType.DEBIT
+                prim_ref = bank_ledger_code
+                contra_code = bank_ledger_code
+                contra_ref = ledger_code
+            else:
+                return Response({'error': f'Unsupported voucher type {vch_type}.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            if primary:
+                primary.vch_date = vch_date
+                primary.amount = amount
+                primary.ledger_code = ledger_code
+                primary.ref_code = prim_ref
+                primary.remarks = remarks
+                primary.chq_no = chq_no
+                primary.type = prim_type
+                primary.save()
+
+            if contra:
+                contra.vch_date = vch_date
+                contra.amount = amount
+                contra.ledger_code = contra_code
+                contra.ref_code = contra_ref
+                contra.remarks = remarks
+                contra.chq_no = chq_no
+                contra.type = contra_type
+                contra.save()
+
+        return Response({
+            'message': f'Voucher {vch_type_upper} #{vch_number} updated successfully.',
+            'vch_number': vch_number,
+            'firm_code': firm_code
+        }, status=status.HTTP_200_OK)
+
     def delete(self, request, firm_code, vch_type, vch_number):
         with transaction.atomic():
             rows = Transaction.objects.filter(
@@ -734,4 +852,7 @@ class VoucherDeleteAPIView(APIView):
             {'message': f'Voucher {vch_type} #{vch_number} ({count} entries) deleted.'},
             status=status.HTTP_200_OK
         )
+
+
+VoucherDeleteAPIView = VoucherDetailAPIView
 
