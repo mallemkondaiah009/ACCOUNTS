@@ -437,6 +437,7 @@
         }
 
         .table-responsive {
+            width: 100%;
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
         }
@@ -444,76 +445,100 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.84rem;
             text-align: left;
+            font-size: 0.86rem;
+            min-width: 850px;
         }
 
         th {
-            background-color: #f8fafc;
-            color: var(--text-muted);
-            font-size: 0.72rem;
+            background: #f8fafc;
+            color: #475569;
             font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 12px 14px;
+            padding: 12px 16px;
             border-bottom: 1px solid var(--border-color);
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
             white-space: nowrap;
         }
 
         td {
-            padding: 12px 14px;
+            padding: 12px 16px;
             border-bottom: 1px solid var(--border-color);
             color: var(--text-main);
             vertical-align: middle;
         }
 
-        tr:hover td {
-            background-color: #f8fafc;
-        }
+        tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: #f8fafc; }
 
-        .amount-cell {
+        .code-pill {
             font-family: 'JetBrains Mono', monospace;
-            font-weight: 700;
-            text-align: right;
-            white-space: nowrap;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 3px 8px;
+            background: #f1f5f9;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            display: inline-block;
         }
 
-        .table-actions {
-            display: flex;
-            align-items: center;
-            gap: 6px;
+        .badge-debit {
+            background: #fee2e2;
+            color: #dc2626;
+            font-weight: 800;
+            font-size: 0.7rem;
+            padding: 2px 7px;
+            border: 1px solid #fca5a5;
+            display: inline-block;
+        }
+
+        .badge-credit {
+            background: #dcfce7;
+            color: #16a34a;
+            font-weight: 800;
+            font-size: 0.7rem;
+            padding: 2px 7px;
+            border: 1px solid #86efac;
+            display: inline-block;
         }
 
         .btn-action {
-            background: none;
-            border: 1px solid var(--border-color);
+            background: transparent;
+            border: 1px solid transparent;
             padding: 5px 9px;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            font-size: 0.74rem;
-            font-weight: 700;
+            gap: 5px;
+            font-size: 0.78rem;
+            font-weight: 600;
             transition: all 0.15s ease;
         }
 
-        .btn-edit {
-            color: #4f46e5;
-            background-color: #eef2ff;
-            border-color: #c7d2fe;
-        }
-        .btn-edit:hover {
-            background-color: #e0e7ff;
-            color: #4338ca;
+        .btn-action svg {
+            display: block;
+            pointer-events: none;
         }
 
         .btn-delete {
             color: var(--debit-red);
-            background-color: #fef2f2;
-            border-color: #fca5a5;
+            border-color: #fee2e2;
+            background: #fef2f2;
         }
         .btn-delete:hover {
-            background-color: #fee2e2;
+            background: #fee2e2;
+            border-color: #fca5a5;
+        }
+
+        .btn-edit {
+            color: #4f46e5;
+            border-color: #c7d2fe;
+            background: #eef2ff;
+        }
+        .btn-edit:hover {
+            background: #e0e7ff;
+            border-color: #a5b4fc;
         }
 
         /* ── MODALS (CRISP, RESPONSIVE, 100DVH SAFE) ── */
@@ -705,6 +730,30 @@
         }
 
         @media (max-width: 768px) {
+            .table-toolbar {
+                padding: 1rem 0.9rem;
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .toolbar-title-wrap h3 {
+                font-size: 1.05rem;
+            }
+
+            .toolbar-filters {
+                flex-direction: column;
+                align-items: stretch;
+                width: 100%;
+                gap: 8px;
+            }
+
+            .toolbar-filters select,
+            .toolbar-filters .search-box,
+            .toolbar-filters input {
+                width: 100% !important;
+                min-width: 0 !important;
+            }
 
             main {
                 padding: 1rem 0.8rem;
@@ -870,14 +919,14 @@
 
                 <!-- FORM ACTIONS -->
                 <div class="form-actions">
-                    <button type="button" class="btn-reset" onclick="resetForm()">Clear Form</button>
+                    <button type="button" class="btn-reset" onclick="resetForm()">Reset</button>
                     <button type="submit" class="btn-primary" id="btn-save-jv">
                         <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
                             <polyline points="17 21 17 13 7 13 7 21"></polyline>
                             <polyline points="7 3 7 8 15 8"></polyline>
                         </svg>
-                        Post Journal Voucher
+                        Save
                     </button>
                 </div>
             </form>
@@ -903,20 +952,19 @@
                 <table>
                     <thead>
                         <tr>
-                            <th style="width: 100px;">Date</th>
-                            <th style="width: 85px;">Vch #</th>
-                            <th style="width: 130px;">Firm</th>
-                            <th>Ledger</th>
-                            <th>Contra</th>
-                            <th style="width: 80px; text-align: center;">Type</th>
-                            <th style="width: 130px; text-align: right;">Amount (₹)</th>
+                            <th style="width: 90px;">Vch #</th>
+                            <th style="width: 105px;">Date</th>
+                            <th style="width: 140px;">Firm</th>
+                            <th>Ledger Account</th>
+                            <th>Contra Account</th>
+                            <th style="width: 120px;">Amount</th>
                             <th>Remarks</th>
-                            <th style="width: 120px; text-align: center;">Actions</th>
+                            <th style="width: 100px; text-align: right;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="transactions-tbody">
                         <tr>
-                            <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">
+                            <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">
                                 Loading recorded vouchers...
                             </td>
                         </tr>
@@ -1015,6 +1063,11 @@
     <div class="toast-container" id="toastContainer"></div>
 
     <script>
+        const ICONS = {
+            edit: '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>',
+            delete: '<svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>'
+        };
+
         // State variables
         let firms = [];
         let ledgers = [];
@@ -1362,11 +1415,13 @@
                 );
             }
 
+            const emptyMsg = search || filterFirm ? 'No matching journal vouchers found.' : 'No journal vouchers recorded yet.';
+
             if (!filtered.length) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">
-                            ${search || filterFirm ? 'No matching journal vouchers found.' : 'No journal vouchers recorded yet.'}
+                        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">
+                            ${emptyMsg}
                         </td>
                     </tr>
                 `;
@@ -1375,31 +1430,38 @@
 
             tbody.innerHTML = filtered.map(t => {
                 const isDebit = (t.type === 'D');
-                const badge = isDebit 
-                    ? '<span class="badge-type-dr">DR</span>' 
-                    : '<span class="badge-type-cr">CR</span>';
                 const formattedAmt = parseFloat(t.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                const amtColor = isDebit ? 'var(--debit-red)' : 'var(--credit-green)';
+                const amtColor = isDebit ? '#dc2626' : '#16a34a';
+                const firmName = t.firm_name || (firms.find(f => f.FirmCode === t.firm_code) || {}).Firmname || '';
 
                 return `
                     <tr>
-                        <td>${escapeHtml(t.vch_date)}</td>
-                        <td><strong style="font-family: 'JetBrains Mono', monospace;">#${t.vch_number}</strong></td>
-                        <td>${escapeHtml(t.firm_code)}</td>
-                        <td><strong>${escapeHtml(t.ledger_name || t.ledger_code)}</strong> <span style="font-size:0.75rem; color:var(--text-muted);">(${escapeHtml(t.ledger_code)})</span></td>
-                        <td><strong>${escapeHtml(t.ref_name || t.ref_code || '-')}</strong> <span style="font-size:0.75rem; color:var(--text-muted);">(${escapeHtml(t.ref_code || '-')})</span></td>
-                        <td style="text-align: center;">${badge}</td>
-                        <td class="amount-cell" style="color: ${amtColor};">₹ ${formattedAmt}</td>
-                        <td style="color: var(--text-muted);">${escapeHtml(t.remarks || '-')}</td>
-                        <td style="text-align: center;">
-                            <div class="table-actions" style="justify-content: center;">
-                                <button type="button" class="btn-action btn-edit" onclick="openEditModal('${escapeHtml(t.firm_code)}', ${t.vch_number})">
-                                    Edit
-                                </button>
-                                <button type="button" class="btn-action btn-delete" onclick="openDeleteModal('${escapeHtml(t.firm_code)}', ${t.vch_number})">
-                                    Delete
-                                </button>
+                        <td><span class="code-pill" style="color: #0d9488; border-color: #99f6e4; font-weight: 700;">#${escapeHtml(t.vch_number)}</span></td>
+                        <td style="color: var(--text-muted); font-size: 0.82rem; white-space: nowrap;">${escapeHtml(t.vch_date)}</td>
+                        <td><span class="code-pill">${escapeHtml(t.firm_code)}</span> <span style="font-size:0.8rem; color:var(--text-muted); display:block; margin-top:2px;">${escapeHtml(firmName)}</span></td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span class="${isDebit ? 'badge-debit' : 'badge-credit'}" style="font-size:0.68rem; padding: 2px 6px;">${isDebit ? 'DR' : 'CR'}</span>
+                                <strong style="color: ${isDebit ? '#dc2626' : '#16a34a'}; font-weight: 700;">${escapeHtml(t.ledger_name || t.ledger_code)}</strong>
+                                <span style="font-size:0.75rem; color:var(--text-muted);">(${escapeHtml(t.ledger_code)})</span>
                             </div>
+                        </td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <span class="${isDebit ? 'badge-credit' : 'badge-debit'}" style="font-size:0.68rem; padding: 2px 6px;">${isDebit ? 'CR' : 'DR'}</span>
+                                <span style="color: ${isDebit ? '#16a34a' : '#dc2626'}; font-weight: 700;">${escapeHtml(t.ref_name || t.ref_code || '-')}</span>
+                                <span style="font-size:0.75rem; color:var(--text-muted);">(${escapeHtml(t.ref_code || '-')})</span>
+                            </div>
+                        </td>
+                        <td><strong style="color: ${amtColor}; font-size: 0.95rem; font-family: 'JetBrains Mono', monospace;">₹ ${formattedAmt}</strong></td>
+                        <td style="color: var(--text-muted); font-size: 0.82rem; max-width: 180px;">${escapeHtml(t.remarks || '-')}</td>
+                        <td style="text-align: right; white-space: nowrap;">
+                            <button type="button" class="btn-action btn-edit" onclick="openEditModal('${escapeHtml(t.firm_code)}', ${t.vch_number})" title="Edit Voucher" aria-label="Edit Voucher">
+                                ${ICONS.edit}
+                            </button>
+                            <button type="button" class="btn-action btn-delete" onclick="openDeleteModal('${escapeHtml(t.firm_code)}', ${t.vch_number})" title="Delete Voucher" aria-label="Delete Voucher">
+                                ${ICONS.delete}
+                            </button>
                         </td>
                     </tr>
                 `;
@@ -1463,7 +1525,7 @@
 
             const btnSave = document.getElementById('btn-save-jv');
             btnSave.disabled = true;
-            btnSave.innerText = 'Posting...';
+            btnSave.innerText = 'Saving...';
 
             try {
                 const res = await fetch('/api/transactions/journal-voucher/', {
@@ -1502,7 +1564,7 @@
                         <polyline points="17 21 17 13 7 13 7 21"></polyline>
                         <polyline points="7 3 7 8 15 8"></polyline>
                     </svg>
-                    Post Journal Voucher
+                    Save
                 `;
             }
         }
