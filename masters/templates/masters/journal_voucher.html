@@ -290,9 +290,9 @@
         /* ── PREVIEW BOX ── */
         .preview-box {
             margin-top: 1.4rem;
-            padding: 1.1rem 1.4rem;
-            background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
-            border: 1px solid var(--accent-border);
+            padding: 1rem 1.25rem;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 1.2rem;
@@ -893,7 +893,7 @@
                     <!-- Remarks -->
                     <div class="form-group">
                         <label for="jv-remarks">Remarks</label>
-                        <input type="text" id="jv-remarks" maxlength="50" placeholder="Narration (optional)" oninput="updatePreview()">
+                        <input type="text" id="jv-remarks" maxlength="50" oninput="updatePreview()">
                     </div>
                 </div>
 
