@@ -298,6 +298,11 @@
             transition: all 0.2s ease;
         }
 
+        .form-group input[type="number"],
+        input[id*="amount"] {
+            color: #000000 !important;
+        }
+
         .form-group input:focus,
         .form-group select:focus {
             border-color: var(--border-focus);
@@ -655,7 +660,7 @@
             border-collapse: collapse;
             text-align: left;
             font-size: 0.86rem;
-            min-width: 850px;
+            min-width: 960px;
         }
 
         th {
@@ -946,8 +951,8 @@
                         <input type="text" id="bp-chq-no" maxlength="20">
                     </div>
                     <div class="form-group">
-                        <label for="bp-amount">Payment Amount (₹) *</label>
-                        <input type="number" id="bp-amount" step="0.01" min="0.01" required placeholder="0.00" oninput="updateBpPreviewAmount()">
+                        <label for="bp-amount" style="color: #000000;">Payment Amount (₹) *</label>
+                        <input type="number" id="bp-amount" step="0.01" min="0.01" required placeholder="0" onfocus="this.select()" oninput="updateBpPreviewAmount()" style="color: #000000;">
                     </div>
                     <div class="form-group">
                         <label for="bp-remarks">Remarks</label>
@@ -972,7 +977,7 @@
                     </div>
                     <div class="preview-amount-wrap">
                         <span style="font-size: 0.78rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); white-space: nowrap; flex-shrink: 0;">Total Amount</span>
-                        <div id="bp-preview-amount" style="font-size: 1.25rem; font-weight: 800; color: #0284c7; font-family: 'JetBrains Mono', monospace; word-break: break-all; text-align: right;">₹ 0.00</div>
+                        <div id="bp-preview-amount" style="font-size: 1.25rem; font-weight: 800; color: #000000; font-family: 'JetBrains Mono', monospace; word-break: break-all; text-align: right;">₹ 0.00</div>
                     </div>
                 </div>
 
@@ -1010,7 +1015,7 @@
                             <th>Paid To Ledger <span class="badge-debit" style="font-size:0.68rem; padding: 2px 6px;">DR</span></th>
                             <th>Bank Account <span class="badge-credit" style="font-size:0.68rem; padding: 2px 6px;">CR</span></th>
                             <th style="width: 110px;">Chq / UTR</th>
-                            <th style="width: 120px;">Amount</th>
+                            <th style="width: 130px; min-width: 125px; white-space: nowrap;">Amount</th>
                             <th>Remarks</th>
                             <th style="width: 140px; text-align: right;">Actions</th>
                         </tr>
@@ -1066,8 +1071,8 @@
                         <input type="text" id="modal-bp-chq-no" maxlength="20">
                     </div>
                     <div class="form-group" style="margin-bottom: 0.75rem;">
-                        <label for="modal-bp-amount">Payment Amount (₹) *</label>
-                        <input type="number" id="modal-bp-amount" step="0.01" min="0.01" required placeholder="0.00" oninput="updateModalBpPreview()">
+                        <label for="modal-bp-amount" style="color: #000000;">Payment Amount (₹) *</label>
+                        <input type="number" id="modal-bp-amount" step="0.01" min="0.01" required placeholder="0" onfocus="this.select()" oninput="updateModalBpPreview()" style="color: #000000;">
                     </div>
                     <div class="form-group" style="margin-bottom: 0;">
                         <label for="modal-bp-remarks">Remarks</label>
@@ -1089,7 +1094,7 @@
                         </div>
                         <div class="modal-preview-amount-row">
                             <span style="font-size: 0.74rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); letter-spacing: 0.05em;">Total Amount</span>
-                            <div id="modal-bp-preview-amount" class="modal-preview-amount-val" style="color: #0284c7;">₹ 0.00</div>
+                            <div id="modal-bp-preview-amount" class="modal-preview-amount-val" style="color: #000000;">₹ 0.00</div>
                         </div>
                     </div>
                 </div>
@@ -1454,7 +1459,10 @@
                 modalLedgerSelect.value = v.ledger_code;
 
                 document.getElementById('modal-bp-chq-no').value = v.chq_no || '';
-                document.getElementById('modal-bp-amount').value = v.amount;
+                const rawAmt = parseFloat(v.amount);
+                const cleanAmt = isNaN(rawAmt) ? '' : (rawAmt % 1 === 0 ? rawAmt : parseFloat(rawAmt.toFixed(2)));
+                const amtEl = document.getElementById('modal-bp-amount');
+                amtEl.value = cleanAmt;
                 document.getElementById('modal-bp-remarks').value = v.remarks || '';
 
                 updateModalBpPreview();
@@ -1617,7 +1625,7 @@
                             </div>
                         </td>
                         <td>${v.chq_no ? `<span class="code-pill">${escapeHtml(v.chq_no)}</span>` : '<span style="color:var(--text-dim);">-</span>'}</td>
-                        <td><strong style="color: #0284c7; font-size: 0.95rem;">₹ ${formattedAmount}</strong></td>
+                        <td style="white-space: nowrap;"><strong style="color: #000000; font-size: 0.95rem; white-space: nowrap; font-variant-numeric: tabular-nums;">₹&nbsp;${formattedAmount}</strong></td>
                         <td style="color: var(--text-muted); font-size: 0.82rem; max-width: 180px;">${escapeHtml(v.remarks || '-')}</td>
                         <td style="text-align: right; white-space: nowrap;">
                             <button class="btn-action btn-edit" onclick="editVoucher('${escapeHtml(v.firm_code)}', '${escapeHtml(v.vch_type)}', ${v.vch_number})" title="Edit Voucher">

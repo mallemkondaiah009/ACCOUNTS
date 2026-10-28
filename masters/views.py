@@ -348,12 +348,17 @@ class LedgerMasterDetailAPIView(APIView):
 
     def delete(self, request, pk):
         ledger = self.get_object(pk)
+        tx_count = Transaction.objects.filter(Q(ledger=ledger) | Q(ref_code=ledger.ledger_code)).count()
+        if tx_count > 0:
+            return Response({
+                'error': f"Cannot delete Ledger '{pk}' ({ledger.ledger_name}) because {tx_count} transaction record(s) exist with this ledger. Please delete the associated vouchers first."
+            }, status=status.HTTP_400_BAD_REQUEST)
         try:
             ledger.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         except ProtectedError:
             return Response({
-                'error': f"Cannot delete Ledger '{pk}' because it is referenced in transactions. Please delete associated vouchers first."
+                'error': f"Cannot delete Ledger '{pk}' ({ledger.ledger_name}) because it is referenced in transactions or other records. Please delete associated vouchers first."
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -750,7 +755,7 @@ class TransactionListAPIView(APIView):
     GET /api/transactions/ - Supports ?firm_code=..., ?vch_type=..., ?vch_number=..., ?search=...
     """
     def get(self, request):
-        queryset = Transaction.objects.select_related('firm').all().order_by('-vch_date', '-vch_number', 'contra')
+        queryset = Transaction.objects.select_related('firm', 'ledger').all().order_by('-vch_date', '-vch_number', 'contra')
 
         firm_code = request.query_params.get('firm_code')
         if firm_code:
@@ -767,7 +772,8 @@ class TransactionListAPIView(APIView):
         search = request.query_params.get('search')
         if search:
             queryset = queryset.filter(
-                Q(ledger_code__icontains=search) |
+                Q(ledger__ledger_code__icontains=search) |
+                Q(ledger__ledger_name__icontains=search) |
                 Q(ref_code__icontains=search) |
                 Q(remarks__icontains=search) |
                 Q(firm__firm_name__icontains=search)
@@ -806,7 +812,7 @@ class VoucherDetailAPIView(APIView):
             'vch_type': vch_type.upper(),
             'vch_number': vch_number,
             'vch_date': str(primary.vch_date),
-            'amount': str(primary.amount),
+            'amount': str(int(primary.amount)) if primary.amount == int(primary.amount) else str(primary.amount),
             'type': primary.type,
             'remarks': primary.remarks or '',
             'chq_no': primary.chq_no or '',

@@ -191,7 +191,13 @@ class Transaction(models.Model):
     )
     vch_number = models.IntegerField(db_column='vch_number')
     vch_date = models.DateField(db_column='vch_date')
-    ledger_code = models.CharField(max_length=5, db_column='Ledger_code')
+    ledger = models.ForeignKey(
+        LedgerMaster,
+        on_delete=models.PROTECT,
+        related_name='transactions',
+        db_column='Ledger_code',
+        help_text="Primary ledger account reference"
+    )
     ref_code = models.CharField(max_length=5, db_column='ref_code')
     remarks = models.CharField(max_length=50, blank=True, default='', db_column='remarks')
     chq_no = models.CharField(max_length=10, blank=True, null=True, db_column='Chq No')
@@ -208,6 +214,19 @@ class Transaction(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def __init__(self, *args, **kwargs):
+        if 'ledger_code' in kwargs and 'ledger_id' not in kwargs and 'ledger' not in kwargs:
+            kwargs['ledger_id'] = kwargs.pop('ledger_code')
+        super().__init__(*args, **kwargs)
+
+    @property
+    def ledger_code(self):
+        return self.ledger_id
+
+    @ledger_code.setter
+    def ledger_code(self, value):
+        self.ledger_id = value
 
     class Meta:
         db_table = 'trans'

@@ -265,20 +265,20 @@
             border-color: #cbd5e1;
         }
 
-        .dr-input-wrapper input {
-            border-color: #fca5a5;
+        .dr-input-wrapper input,
+        .cr-input-wrapper input,
+        .form-group input[type="number"],
+        input[id*="amount"] {
+            color: #000000 !important;
         }
-        .dr-input-wrapper input:focus {
-            border-color: var(--debit-red);
-            box-shadow: 0 0 0 1px var(--debit-red);
+        .dr-input-wrapper label,
+        .cr-input-wrapper label {
+            color: #000000 !important;
         }
-
-        .cr-input-wrapper input {
-            border-color: #86efac;
-        }
+        .dr-input-wrapper input:focus,
         .cr-input-wrapper input:focus {
-            border-color: var(--credit-green);
-            box-shadow: 0 0 0 1px var(--credit-green);
+            border-color: #000000;
+            box-shadow: 0 0 0 1px #000000;
         }
 
         .amount-hint {
@@ -323,7 +323,7 @@
             font-family: 'JetBrains Mono', monospace;
             font-size: 1.2rem;
             font-weight: 800;
-            color: var(--accent-primary);
+            color: #000000 !important;
         }
 
         .badge-type-dr {
@@ -447,7 +447,7 @@
             border-collapse: collapse;
             text-align: left;
             font-size: 0.86rem;
-            min-width: 850px;
+            min-width: 950px;
         }
 
         th {
@@ -878,15 +878,15 @@
 
                     <!-- DR Amount -->
                     <div class="form-group dr-input-wrapper">
-                        <label for="jv-dr-amount" style="color: var(--debit-red);">DR Amount (Debit)</label>
-                        <input type="number" id="jv-dr-amount" step="0.01" min="0.01" placeholder="0.00" oninput="onDrAmountInput()">
+                        <label for="jv-dr-amount" style="color: #000000;">DR Amount (Debit)</label>
+                        <input type="number" id="jv-dr-amount" step="0.01" min="0.01" placeholder="0" onfocus="this.select()" oninput="onDrAmountInput()" style="color: #000000;">
                         <span class="amount-hint">Entering DR clears CR</span>
                     </div>
 
                     <!-- CR Amount -->
                     <div class="form-group cr-input-wrapper">
-                        <label for="jv-cr-amount" style="color: var(--credit-green);">CR Amount (Credit)</label>
-                        <input type="number" id="jv-cr-amount" step="0.01" min="0.01" placeholder="0.00" oninput="onCrAmountInput()">
+                        <label for="jv-cr-amount" style="color: #000000;">CR Amount (Credit)</label>
+                        <input type="number" id="jv-cr-amount" step="0.01" min="0.01" placeholder="0" onfocus="this.select()" oninput="onCrAmountInput()" style="color: #000000;">
                         <span class="amount-hint">Entering CR clears DR</span>
                     </div>
 
@@ -912,8 +912,8 @@
                         <div id="preview-badge"><span class="badge-type-none">No Amount</span></div>
                     </div>
                     <div class="preview-item" style="text-align: right;">
-                        <span class="preview-label">Voucher Amount</span>
-                        <span class="preview-amount" id="preview-amount">₹ 0.00</span>
+                        <span class="preview-label">Total Amount</span>
+                        <span class="preview-amount" id="preview-amount" style="color: #000000;">₹ 0.00</span>
                     </div>
                 </div>
 
@@ -957,7 +957,7 @@
                             <th style="width: 140px;">Firm</th>
                             <th>Ledger Account</th>
                             <th>Contra Account</th>
-                            <th style="width: 120px;">Amount</th>
+                            <th style="width: 130px; min-width: 125px; white-space: nowrap;">Amount</th>
                             <th>Remarks</th>
                             <th style="width: 100px; text-align: right;">Actions</th>
                         </tr>
@@ -1005,12 +1005,12 @@
                             <select id="modal-contra" required onchange="onModalLedgerChanged('contra')"></select>
                         </div>
                         <div class="form-group dr-input-wrapper">
-                            <label for="modal-dr-amount" style="color: var(--debit-red);">DR Amount (Debit)</label>
-                            <input type="number" id="modal-dr-amount" step="0.01" min="0.01" placeholder="0.00" oninput="onModalDrAmountInput()">
+                            <label for="modal-dr-amount" style="color: #000000;">DR Amount (Debit)</label>
+                            <input type="number" id="modal-dr-amount" step="0.01" min="0.01" placeholder="0" onfocus="this.select()" oninput="onModalDrAmountInput()" style="color: #000000;">
                         </div>
                         <div class="form-group cr-input-wrapper">
-                            <label for="modal-cr-amount" style="color: var(--credit-green);">CR Amount (Credit)</label>
-                            <input type="number" id="modal-cr-amount" step="0.01" min="0.01" placeholder="0.00" oninput="onModalCrAmountInput()">
+                            <label for="modal-cr-amount" style="color: #000000;">CR Amount (Credit)</label>
+                            <input type="number" id="modal-cr-amount" step="0.01" min="0.01" placeholder="0" onfocus="this.select()" oninput="onModalCrAmountInput()" style="color: #000000;">
                         </div>
                         <div class="form-group" style="grid-column: span 2;">
                             <label for="modal-remarks">Remarks</label>
@@ -1026,7 +1026,7 @@
                         </div>
                         <div class="preview-item" style="text-align: right;">
                             <span class="preview-label">Amount</span>
-                            <span class="preview-amount" id="modal-preview-amount">₹ 0.00</span>
+                            <span class="preview-amount" id="modal-preview-amount" style="color: #000000;">₹ 0.00</span>
                         </div>
                     </div>
                 </div>
@@ -1275,15 +1275,15 @@
             if (drVal > 0) {
                 badgeEl.innerHTML = '<span class="badge-type-dr">DEBIT (DR)</span>';
                 amountEl.innerText = `₹ ${drVal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                amountEl.style.color = 'var(--debit-red)';
+                amountEl.style.color = '#000000';
             } else if (crVal > 0) {
                 badgeEl.innerHTML = '<span class="badge-type-cr">CREDIT (CR)</span>';
                 amountEl.innerText = `₹ ${crVal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                amountEl.style.color = 'var(--credit-green)';
+                amountEl.style.color = '#000000';
             } else {
                 badgeEl.innerHTML = '<span class="badge-type-none">No Amount</span>';
                 amountEl.innerText = '₹ 0.00';
-                amountEl.style.color = 'var(--accent-primary)';
+                amountEl.style.color = '#000000';
             }
         }
 
@@ -1296,15 +1296,15 @@
             if (drVal > 0) {
                 badgeEl.innerHTML = '<span class="badge-type-dr">DEBIT (DR)</span>';
                 amountEl.innerText = `₹ ${drVal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                amountEl.style.color = 'var(--debit-red)';
+                amountEl.style.color = '#000000';
             } else if (crVal > 0) {
                 badgeEl.innerHTML = '<span class="badge-type-cr">CREDIT (CR)</span>';
                 amountEl.innerText = `₹ ${crVal.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-                amountEl.style.color = 'var(--credit-green)';
+                amountEl.style.color = '#000000';
             } else {
                 badgeEl.innerHTML = '<span class="badge-type-none">No Amount</span>';
                 amountEl.innerText = '₹ 0.00';
-                amountEl.style.color = 'var(--accent-primary)';
+                amountEl.style.color = '#000000';
             }
         }
 
@@ -1431,7 +1431,7 @@
             tbody.innerHTML = filtered.map(t => {
                 const isDebit = (t.type === 'D');
                 const formattedAmt = parseFloat(t.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                const amtColor = isDebit ? '#dc2626' : '#16a34a';
+                const amtColor = '#000000';
                 const firmName = t.firm_name || (firms.find(f => f.FirmCode === t.firm_code) || {}).Firmname || '';
 
                 return `
@@ -1453,7 +1453,7 @@
                                 <span style="font-size:0.75rem; color:var(--text-muted);">(${escapeHtml(t.ref_code || '-')})</span>
                             </div>
                         </td>
-                        <td><strong style="color: ${amtColor}; font-size: 0.95rem; font-family: 'JetBrains Mono', monospace;">₹ ${formattedAmt}</strong></td>
+                        <td style="white-space: nowrap;"><strong style="color: ${amtColor}; font-size: 0.95rem; font-family: 'JetBrains Mono', monospace; white-space: nowrap; font-variant-numeric: tabular-nums;">₹&nbsp;${formattedAmt}</strong></td>
                         <td style="color: var(--text-muted); font-size: 0.82rem; max-width: 180px;">${escapeHtml(t.remarks || '-')}</td>
                         <td style="text-align: right; white-space: nowrap;">
                             <button type="button" class="btn-action btn-edit" onclick="openEditModal('${escapeHtml(t.firm_code)}', ${t.vch_number})" title="Edit Voucher" aria-label="Edit Voucher">
@@ -1609,11 +1609,14 @@
                 mLedger.value = v.ledger_code;
                 mContra.value = v.ref_code;
 
+                const rawAmt = parseFloat(v.amount);
+                const cleanAmt = isNaN(rawAmt) ? '' : (rawAmt % 1 === 0 ? rawAmt : parseFloat(rawAmt.toFixed(2)));
+
                 if (v.type === 'D') {
-                    document.getElementById('modal-dr-amount').value = v.amount;
+                    document.getElementById('modal-dr-amount').value = cleanAmt;
                     document.getElementById('modal-cr-amount').value = '';
                 } else {
-                    document.getElementById('modal-cr-amount').value = v.amount;
+                    document.getElementById('modal-cr-amount').value = cleanAmt;
                     document.getElementById('modal-dr-amount').value = '';
                 }
 

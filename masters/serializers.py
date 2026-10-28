@@ -141,7 +141,8 @@ class LedgerMasterSerializer(serializers.ModelSerializer):
 class TransactionSerializer(serializers.ModelSerializer):
     firm_code = serializers.CharField(source='firm.firm_code', read_only=True)
     firm_name = serializers.CharField(source='firm.firm_name', read_only=True)
-    ledger_name = serializers.SerializerMethodField()
+    ledger_code = serializers.CharField(source='ledger.ledger_code', read_only=True)
+    ledger_name = serializers.CharField(source='ledger.ledger_name', read_only=True)
     ref_name = serializers.SerializerMethodField()
 
     class Meta:
@@ -166,10 +167,6 @@ class TransactionSerializer(serializers.ModelSerializer):
             'updated_at',
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
-
-    def get_ledger_name(self, obj):
-        ledger = LedgerMaster.objects.filter(ledger_code=obj.ledger_code).first()
-        return ledger.ledger_name if ledger else obj.ledger_code
 
     def get_ref_name(self, obj):
         ledger = LedgerMaster.objects.filter(ledger_code=obj.ref_code).first()
